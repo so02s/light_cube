@@ -1,9 +1,9 @@
 import logging
-from aiogram import Bot, Dispatcher, html
+from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from decouple import config
-from db_handler.db_class import PostgresHandler
+from asyncpg_lite import DatabaseManager
 import paho.mqtt.client as mqtt
 
 # получение админов
@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 # MQTT
 client = mqtt.Client()
-client.connect("192.168.87.9", 1883)
+client.connect("127.0.0.1", 1883)
 
 # взаимодействие с бд
-pg_db = PostgresHandler(dsn=config('PG_LINK'), deletion_password=config('ROOT_PASS'))
+db_manager = DatabaseManager(db_url=config('PG_LINK'), deletion_password=config('ROOT_PASS'))
 
 # инициализация бота
 bot = Bot(token=config('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))

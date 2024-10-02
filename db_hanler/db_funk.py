@@ -1,4 +1,18 @@
-from create_bot import pg_manager
+from sqlalchemy import Integer, String, BigInteger, TIMESTAMP
+from create_bot import db_manager
+import asyncio
+
+async def create_table_users(table_name='users_reg'):
+    async with db_manager as client:
+        columns = [
+            {"name": "user_id", "type": BigInteger, "options": {"primary_key": True, "autoincrement": False}},
+            {"name": "full_name", "type": String},
+            {"name": "user_login", "type": String},
+            {"name": "refer_id", "type": BigInteger},
+            {"name": "count_refer", "type": Integer, "options": {"default": 0, "server_default": 0}},
+            {"name": "date_reg", "type": TIMESTAMP},
+        ]
+        await client.create_table(table_name=table_name, columns=columns)
 
 async def create_table_quiz(table_name='quiz'):
     async with pg_manager:

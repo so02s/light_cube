@@ -12,7 +12,7 @@ start_router = Router()
 # Старт для админа
 @start_router.message(CommandStart())
 async def cmd_start(message: Message):
-    await message.answer('Запуск сообщения по команде /start используя фильтр CommandStart()')
+    await message.answer(f'Запуск сообщения по команде /start используя фильтр CommandStart(), твой id = {message.from_user.id}')
 
 # Старт для модератора
 
