@@ -1,25 +1,19 @@
 import asyncio
 from create_bot import bot, dp, admins, db_manager, client
-from handlers.start import start_router
-from handlers.admin_handler import admin_router
-from aiogram.types import BotCommand, BotCommandScopeDefault
 from sqlalchemy import Integer, String, BigInteger, TIMESTAMP
 from concurrent.futures import ThreadPoolExecutor
 
-import asyncio_mqtt as aiomqtt
+import aiomqtt
 
-async def set_commands():
-    commands = [BotCommand(command='start', description='Старт'), 
-                BotCommand(command='on', description='Включить свет'),
-                BotCommand(command='off', description='Выключить свет'),
-                BotCommand(command='random', description='Поменять на рандомный цвет')]
-    await bot.set_my_commands(commands, BotCommandScopeDefault())
+from handlers.start import start_router
+from handlers.admin_handler import admin_router
+import keyboards.all_keyboards as kb
+from aiogram.types import BotCommandScopeChat
 
 async def start_bot():
-    await set_commands()
-    # count_users = await get_all_users(count=True)
     try:
         for admin_id in admins:
+            await bot.set_my_commands(kb.commands_admin(), BotCommandScopeChat(chat_id=admin_id))
             await bot.send_message(admin_id, f'Я запущен🥳.')
     except:
         pass

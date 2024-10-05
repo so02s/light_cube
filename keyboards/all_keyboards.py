@@ -1,23 +1,26 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import BotCommand, BotCommandScopeDefault
 from create_bot import admins
 
-def main_kb(user_telegram_id: int):
-    buttons = ["👤 Мой профиль"]
-    return generate_kb(user_telegram_id, buttons)
+def commands_admin():
+    return [BotCommand(command='start', description='Старт'), 
+                BotCommand(command='on', description='Включить свет'),
+                BotCommand(command='off', description='Выключить свет'),
+                BotCommand(command='random', description='Поменять на рандомный цвет'),
+                BotCommand(command='add_moder', description='Добавить модератора'),
+                BotCommand(command='moder', description='Режим модератора'),
+                BotCommand(command='user', description='Режим юзера')]
 
-def home_page_kb(user_telegram_id: int):
-    buttons = ["🔙 Назад"]
-    return generate_kb(user_telegram_id, buttons)
+def commands_moder():
+    return [BotCommand(command='start', description='Старт'), 
+                BotCommand(command='add_quiz', description='Добавить квиз'),
+                BotCommand(command='del_quiz', description='Удалить квиз'),
+                BotCommand(command='change_quiz', description='Изменить квиз'),
+                BotCommand(command='user', description='Режим юзера')]
 
-def generate_kb(user_telegram_id: int, buttons: list) -> ReplyKeyboardMarkup:
-    kb_list = []
-    for button in buttons:
-        kb_list.append([KeyboardButton(text=button)])
-    if user_telegram_id in admins:
-        kb_list.append([KeyboardButton(text="⚙️ Админ панель")])
-    return ReplyKeyboardMarkup(
-        keyboard=kb_list,
-        resize_keyboard=True,
-        one_time_keyboard=True,
-        input_field_placeholder="Воспользуйтесь меню:"
-    )
+def commands_change_quiz():
+    return [BotCommand(command='add_question', description='Добавить вопрос'), 
+                BotCommand(command='del_question', description='Удалить вопрос'),
+                BotCommand(command='change_question', description='Изменить вопрос'),
+                BotCommand(command='change_start_time', description='Изменить время начала квиза'),
+                BotCommand(command='exit ', description='Выйти из изменения квиза')]
