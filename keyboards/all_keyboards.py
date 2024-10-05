@@ -24,3 +24,6 @@ def commands_change_quiz():
                 BotCommand(command='change_question', description='Изменить вопрос'),
                 BotCommand(command='change_start_time', description='Изменить время начала квиза'),
                 BotCommand(command='exit ', description='Выйти из изменения квиза')]
+    
+def commands_user():
+    return [BotCommand(command='start', description='Старт')]
