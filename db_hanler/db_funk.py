@@ -2,78 +2,90 @@ from sqlalchemy import Integer, String, BigInteger, TIMESTAMP
 from create_bot import db_manager
 import asyncio
 
-async def create_table_users(table_name='users_reg'):
+async def create_table_quiz(table_name='quiz'):
     async with db_manager as client:
         columns = [
-            {"name": "user_id", "type": BigInteger, "options": {"primary_key": True, "autoincrement": False}},
-            {"name": "full_name", "type": String},
-            {"name": "user_login", "type": String},
-            {"name": "refer_id", "type": BigInteger},
-            {"name": "count_refer", "type": Integer, "options": {"default": 0, "server_default": 0}},
-            {"name": "date_reg", "type": TIMESTAMP},
+            {"name": "id_quiz", "type": BigInteger, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "quiz_name", "type": String, "options": {"not_null": True}},
+            {"name": "num_corrections", "type": Integer, "options": {"not_null": True, "default": 0, "server_default": 0}},
+            {"name": "time_start", "type": String},
         ]
         await client.create_table(table_name=table_name, columns=columns)
 
-async def create_table_quiz(table_name='quiz'):
-    async with pg_manager:
-        columns = ['id_quiz INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL',
-                   'quiz_name TEXT NOT NULL',
-                   'num_corrections INTEGER NOT NULL DEFAULT 0',
-                   'time_start TEXT']
-        await pg_manager.create_table(table_name=table_name, columns=columns)
-
 async def create_table_question(table_name='question'):
-    async with pg_manager:
-        columns = ['id_question INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL',
-                   'text TEXT NOT NULL',
-                   'correct_answer INTEGER',
-                   'time_for_answer INTEGER',
-                   'quiz_id INTEGER',
-                   'FOREIGN KEY (quiz_id) REFERENCES quiz(id_quiz)',
-                   'FOREIGN KEY (correct_answer) REFERENCES answer(id_answer)']
-        await pg_manager.create_table(table_name=table_name, columns=columns)
+    async with db_manager as client:
+        columns = [
+            {"name": "id_question", "type": BigInteger, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "text", "type": String, "options": {"not_null": True}},
+            {"name": "correct_answer", "type": Integer},
+            {"name": "time_for_answer", "type": Integer},
+            {"name": "quiz_id", "type": BigInteger},
+        ]
+        foreign_keys = [
+            {"columns": ["quiz_id"], "references": {"table": "quiz", "columns": ["id_quiz"]}},
+            {"columns": ["correct_answer"], "references": {"table": "answer", "columns": ["id_answer"]}},
+        ]
+        await client.create_table(table_name=table_name, columns=columns, foreign_keys=foreign_keys)
 
 async def create_table_answer(table_name='answer'):
-    async with pg_manager:
-        columns = ['id_answer INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL',
-                   'text TEXT NOT NULL',
-                   'id_question INTEGER NOT NULL',
-                   'FOREIGN KEY(id_question) REFERENCES question(id_question)']
-        await pg_manager.create_table(table_name=table_name, columns=columns)
+    async with db_manager as client:
+        columns = [
+            {"name": "id_answer", "type": BigInteger, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "text", "type": String, "options": {"not_null": True}},
+            {"name": "id_question", "type": BigInteger, "options": {"not_null": True}},
+        ]
+        foreign_keys = [
+            {"columns": ["id_question"], "references": {"table": "question", "columns": ["id_question"]}},
+        ]
+        await client.create_table(table_name=table_name, columns=columns, foreign_keys=foreign_keys)
 
 async def create_table_user(table_name='user'):
-    async with pg_manager:
-        columns = ['id_user INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL',
-                   'text TEXT NOT NULL',
-                   'num_attempts INTEGER NOT NULL DEFAULT 0']
-        await pg_manager.create_table(table_name=table_name, columns=columns)
+    async with db_manager as client:
+        columns = [
+            {"name": "id_user", "type": BigInteger, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "text", "type": String, "options": {"not_null": True}},
+            {"name": "num_attempts", "type": Integer, "options": {"not_null": True, "default": 0, "server_default": 0}},
+        ]
+        await client.create_table(table_name=table_name, columns=columns)
 
 async def create_table_cube(table_name='cube'):
-    async with pg_manager:
-        columns = ['id_cube INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL',
-                   'id_user INTEGER NOT NULL',
-                   'status INTEGER',
-                   'FOREIGN KEY(id_user) REFERENCES user(id_user)']
-        await pg_manager.create_table(table_name=table_name, columns=columns)
+    async with db_manager as client:
+        columns = [
+            {"name": "id_cube", "type": BigInteger, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "id_user", "type": BigInteger, "options": {"not_null": True}},
+            {"name": "status", "type": Integer},
+        ]
+        foreign_keys = [
+            {"columns": ["id_user"], "references": {"table": "user", "columns": ["id_user"]}},
+        ]
+        await client.create_table(table_name=table_name, columns=columns, foreign_keys=foreign_keys)
 
 async def create_table_attempt(table_name='attempt'):
-    async with pg_manager:
-        columns = ['id_attempt INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL',
-                   'id_user INTEGER NOT NULL',
-                   'result INTEGER NOT NULL',
-                   'FOREIGN KEY(id_user) REFERENCES user(id_user)']
-        await pg_manager.create_table(table_name=table_name, columns=columns)
+    async with db_manager as client:
+        columns = [
+            {"name": "id_attempt", "type": BigInteger, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "id_user", "type": BigInteger, "options": {"not_null": True}},
+            {"name": "result", "type": Integer, "options": {"not_null": True}},
+        ]
+        foreign_keys = [
+            {"columns": ["id_user"], "references": {"table": "user", "columns": ["id_user"]}},
+        ]
+        await client.create_table(table_name=table_name, columns=columns, foreign_keys=foreign_keys)
 
 async def create_table_testing(table_name='testing'):
-    async with pg_manager:
-        columns = ['id_testing INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL',
-                   'id_question INTEGER NOT NULL',
-                   'id_answer INTEGER NOT NULL',
-                   'id_attempt INTEGER NOT NULL',
-                   'FOREIGN KEY(id_attempt) REFERENCES attempt(id_attempt)',
-                   'FOREIGN KEY(id_question) REFERENCES question(id_question)',
-                   'FOREIGN KEY(id_answer) REFERENCES answer(id_answer)']
-        await pg_manager.create_table(table_name=table_name, columns=columns)
+    async with db_manager as client:
+        columns = [
+            {"name": "id_testing", "type": BigInteger, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "id_question", "type": BigInteger, "options": {"not_null": True}},
+            {"name": "id_answer", "type": BigInteger, "options": {"not_null": True}},
+            {"name": "id_attempt", "type": BigInteger, "options": {"not_null": True}},
+        ]
+        foreign_keys = [
+            {"columns": ["id_attempt"], "references": {"table": "attempt", "columns": ["id_attempt"]}},
+            {"columns": ["id_question"], "references": {"table": "question", "columns": ["id_question"]}},
+            {"columns": ["id_answer"], "references": {"table": "answer", "columns": ["id_answer"]}},
+        ]
+        await client.create_table(table_name=table_name, columns=columns, foreign_keys=foreign_keys)
 
 async def get_user_data(user_id: int, table_name='users_reg'):
     async with pg_manager:
@@ -86,3 +98,4 @@ async def get_user_data(user_id: int, table_name='users_reg'):
 async def register_user(user_data: dict, table_name='user'):
     async with pg_manager:
         await pg_manager.insert_data(table_name=table_name, records_data=user_data)
+        
