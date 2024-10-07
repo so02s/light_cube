@@ -1,13 +1,12 @@
 import asyncio
 from aiogram.types import BotCommandScopeChat
-# from sqlalchemy import Integer, String, BigInteger, TIMESTAMP
-# from concurrent.futures import ThreadPoolExecutor
 
 import aiomqtt
 
-from create_bot import bot, dp, admins, db_manager, client
+from create_bot import bot, dp, admins #, db_manager
 from handlers.start import start_router
 from handlers.admin_handler import admin_router
+from handlers.moder_handler import moder_router
 import keyboards.all_keyboards as kb
 
 async def start_bot():
@@ -25,31 +24,17 @@ async def stop_bot():
     except:
         pass
 
-        
-async def bot_main():
-    dp.include_router(start_router)
-    dp.include_router(admin_router)
+async def main():
+    dp.include_routers(start_router, admin_router, moder_router)
     
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
-    
-    # loop = SelectorEventLoop()
-    # executor = ThreadPoolExecutor()
-    
-    # await loop.run_in_executor(executor, client.connect, "127.0.0.1")
+
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     finally:
         await bot.session.close()
-    
-
-async def mqtt():
-    async with aiomqtt.Client("127.0.0.1") as client:
-        await client.publish("temperature/outside", payload=28.4)
-
-async def main():
-    await asyncio.gather(bot_main(), mqtt())
 
 if __name__ == "__main__":
     asyncio.run(main())

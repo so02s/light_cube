@@ -1,4 +1,6 @@
-from create_bot import client
+from create_bot import admins
+import aiomqtt
 
-async def publish(topic, msg):
-    await client.publish(topic, payload=msg)
+async def wled_publish(topic, msg):
+    async with aiomqtt.Client("localhost") as client:
+        await client.publish("wled/" + topic, payload=msg)

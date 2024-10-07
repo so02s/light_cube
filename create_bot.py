@@ -3,20 +3,13 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from decouple import config
-from asyncpg_lite import DatabaseManager
-import aiomqtt
 
 # логирование
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger=logging.getLogger(__name__)
 
-# MQTT
-# client = mqtt.Client()
-# client.connect("127.0.0.1", 1883)
-client = aiomqtt.Client("localhost", 1883)
-
 # взаимодействие с бд
-db_manager = DatabaseManager(db_url=config('PG_LINK'), deletion_password=config('ROOT_PASS'))
+# db_manager = DatabaseManager(db_url=config('PG_LINK'), deletion_password=config('ROOT_PASS'))
 
 # получение админов, модеров
 # TODO : подкачка не через конфиги, а через бд 

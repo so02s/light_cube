@@ -1,5 +1,7 @@
-asyncpg-lite~=0.3.1
 aiogram~=3.13.1
 python-decouple~=3.8
 pytz
 aiomqtt
+alembic
+sqlalchemy
+asyncpg
