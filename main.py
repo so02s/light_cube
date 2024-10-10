@@ -1,13 +1,18 @@
+# TODO midlware во время квиза - нельзя ничего менять
+
 import asyncio
+import logging
+
 from aiogram.types import BotCommandScopeChat
+from create_bot import bot, dp
+from handlers import start, admin_handler, moder_handler
+from keyboards import all_keyboards as kb
 
-import aiomqtt
+# from middleware import DbSessionMiddleware
 
-from create_bot import bot, dp, admins #, db_manager
-from handlers.start import start_router
-from handlers.admin_handler import admin_router
-from handlers.moder_handler import moder_router
-import keyboards.all_keyboards as kb
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from decouple import config
+from utils.filter import admins
 
 async def start_bot():
     try:
@@ -24,17 +29,23 @@ async def stop_bot():
     except:
         pass
 
+
 async def main():
-    dp.include_routers(start_router, admin_router, moder_router)
+    # engine = create_async_engine(url=settings.DATABASE_URL_asyncpg, echo=True)
+    # async_session = async_sessionmaker(engine, expire_on_commit=False)
     
+    dp.include_routers(start.router, admin_handler.router, moder_handler.router)
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
+    
+    # dp.update.middleware(DbSessionMiddleware(session_pool=sessionmaker))
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     finally:
         await bot.session.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

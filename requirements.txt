@@ -5,3 +5,4 @@ aiomqtt
 alembic
 sqlalchemy
 asyncpg
+configparser

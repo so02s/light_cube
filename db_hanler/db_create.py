@@ -1,15 +1,15 @@
-from sqlalchemy import Table, Integer, String, MetaData, DateTime
+# from sqlalchemy import Table, Integer, String, MetaData, DateTime
 
-metadata_obj = MetaData()
+# metadata_obj = MetaData()
 
-quiz_table = Table(
-    "quiz",
-    metadata_obj,
-    Column("id", Integer, primary_key=True),
-    Column("quiz_name", String, nullable=True),
-    Column("num_corrections", Integer, nullable=True, default=1),
-    Column("time_start", DateTime),
-)
+# quiz_table = Table(
+#     "quiz",
+#     metadata_obj,
+#     Column("id", Integer, primary_key=True),
+#     Column("quiz_name", String, nullable=True),
+#     Column("num_corrections", Integer, nullable=True, default=1),
+#     Column("time_start", DateTime),
+# )
 
 # async def create_table_quiz(table_name='quiz'):
 #     async with db_manager as client:
