@@ -8,6 +8,7 @@ def commands_admin():
                 BotCommand(command='off', description='Выключить свет'),
                 BotCommand(command='random', description='Поменять на рандомный цвет'),
                 BotCommand(command='deep_link', description='Создать реферальную ссылку'),
+                BotCommand(command='all_moder', description='Все модераторы'),
                 BotCommand(command='add_moder', description='Добавить модератора'),
                 BotCommand(command='del_moder', description='Удалить модератора'),
                 BotCommand(command='moder', description='Режим модератора'),
@@ -16,6 +17,7 @@ def commands_admin():
 def commands_moder():
     return [
                 BotCommand(command='start', description='Старт'), 
+                BotCommand(command='all_quiz', description='Вывести все квизы'),
                 BotCommand(command='start_quiz', description='Начать квиз'),
                 BotCommand(command='add_quiz', description='Добавить квиз'),
                 BotCommand(command='del_quiz', description='Удалить квиз'),
