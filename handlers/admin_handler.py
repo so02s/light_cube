@@ -88,7 +88,7 @@ async def confirm_delmoder(msg: Message, state: FSMContext):
             await db.del_moder(data["chosen"])
             await msg.answer(f'Модератор {data["chosen"]} удален')
         except Exception as e:
-            await msg.answer(f'Произошла ошибка: {e}')
+            await msg.answer(f'Произошла ошибка: {e}, попробуйте снова')
         finally:
             await refresh_moders()
             await state.clear()
@@ -103,8 +103,8 @@ async def confirm_delmoder(msg: Message, state: FSMContext):
 
 @router.message(lambda msg: msg.from_user.username in admins(), Command("moder"))
 async def cmd_start(msg: Message, state: FSMContext):
-    await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await msg.answer('Включен режим модератора. Для возвращения напишите /cancel')
+    await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await state.clear()
 
 

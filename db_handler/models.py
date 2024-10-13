@@ -28,6 +28,7 @@ class Quiz(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str]
+    # start_datetime: Mapped[datetime.datetime] = mapped_column()
 
 class Question(Base):
     __tablename__ = 'questions'
@@ -36,6 +37,12 @@ class Question(Base):
     text: Mapped[str]
     quiz_id: Mapped[int] = mapped_column(ForeignKey('quizs.id'))
     quiz = relationship('Quiz', backref='questions')
+    time_limit_seconds: Mapped[int] = mapped_column()  # in seconds
+
+    @property
+    def time_limit(self):
+        minutes, seconds = divmod(self.time_limit_seconds, 60)
+        return minutes * 60 + seconds
 
 class Answer(Base):
     __tablename__ = 'answers'
@@ -45,21 +52,21 @@ class Answer(Base):
     color: Mapped[str] = mapped_column(HexColor()) # мб ошибка
     question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
     question = relationship('Question', backref='answers')
-    
-# class User(Base):
-#     __tablename__ = "users"
-    
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     name: Mapped[str]
 
 class Cube(Base):
     __tablename__ = "cubes"
     
     id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(nullable=True)
     user_id: Mapped[int] = mapped_column(nullable=True)
     connected_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
     status: Mapped[str] = mapped_column(HexColor())
     
+
+# TODO должно быть что-то, что сохраняет ответы юзера
+
+
+
 async def create_all_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

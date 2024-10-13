@@ -33,9 +33,9 @@ async def cmd_start(msg: Message):
     
     
 # TODO 
-@router.message(lambda msg: msg.from_user.username in users(), CommandStart())
-async def cmd_start(msg: Message):
-#     # args = msg.get_args()
-#     # reference = decode_payload(args)
-#     # await add_user_to_cube(msg.from_user.id, reference)
-    await msg.answer(f"Привет, {msg.from_user.username}")
+# @router.message(lambda msg: msg.from_user.username in users(), CommandStart())
+# async def cmd_start(msg: Message):
+# #     # args = msg.get_args()
+# #     # reference = decode_payload(args)
+# #     # await add_user_to_cube(msg.from_user.id, reference)
+#     await msg.answer(f"Привет, {msg.from_user.username}")

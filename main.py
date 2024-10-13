@@ -7,14 +7,14 @@ from aiogram.types import BotCommandScopeChat
 from create_bot import bot, dp
 from handlers import start, admin_handler, moder_handler
 from keyboards import all_keyboards as kb
-from utils.filter import admins, moders, refresh_moders, refresh_admins
+from utils.filter import refresh_moders, refresh_admins
 
 # from middleware import DbSessionMiddleware
 
 from decouple import config
 
 
-# Старт переписать на username админов
+# Старт переписать? 
 
 async def start_bot():
     # try:
@@ -35,8 +35,6 @@ async def stop_bot():
 async def main():
     await refresh_moders()
     await refresh_admins()
-    
-    print('\n\n', admins(), '\n\n')
     
     dp.include_routers(start.router, admin_handler.router, moder_handler.router)
     dp.startup.register(start_bot)

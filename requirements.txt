@@ -6,3 +6,4 @@ alembic
 sqlalchemy
 asyncpg
 configparser
+aioschedule

@@ -27,6 +27,7 @@ def commands_moder():
 def commands_change_quiz():
     return [
                 BotCommand(command='cancel', description='Выход из изменения квиза'),
+                BotCommand(command='all_info', description='Информация о квизе'),
                 BotCommand(command='add_question', description='Добавить вопрос'), 
                 BotCommand(command='del_question', description='Удалить вопрос'),
                 BotCommand(command='change_question', description='Изменить вопрос'),
