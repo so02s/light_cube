@@ -1,17 +1,10 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger, DateTime, TypeDecorator
+from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger, DateTime, TypeDecorator, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
 import asyncio
 from create_bot import engine, Session
-
-class HexColor(TypeDecorator):
-    impl = String
-    def process_bind_param(self, value, dialect):
-        if value and not re.match(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', value):
-            raise ValueError("Invalid hex color")
-        return value
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -28,16 +21,17 @@ class Quiz(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str]
-    # start_datetime: Mapped[datetime.datetime] = mapped_column()
+    start_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
 
 class Question(Base):
     __tablename__ = 'questions'
     
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    quiz_id: Mapped[int] = mapped_column(ForeignKey('quizs.id'), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
-    quiz_id: Mapped[int] = mapped_column(ForeignKey('quizs.id'))
+    time_limit_seconds: Mapped[int] = mapped_column()
+    
     quiz = relationship('Quiz', backref='questions')
-    time_limit_seconds: Mapped[int] = mapped_column()  # in seconds
 
     @property
     def time_limit(self):
@@ -47,9 +41,9 @@ class Question(Base):
 class Answer(Base):
     __tablename__ = 'answers'
     
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
-    color: Mapped[str] = mapped_column(HexColor()) # мб ошибка
+    color: Mapped[str]
     question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
     question = relationship('Question', backref='answers')
 
@@ -60,16 +54,25 @@ class Cube(Base):
     username: Mapped[str] = mapped_column(nullable=True)
     user_id: Mapped[int] = mapped_column(nullable=True)
     connected_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
-    status: Mapped[str] = mapped_column(HexColor())
+    status: Mapped[str] = mapped_column()
+
+
+class Testing(Base):
+    __tablename__ = "testing"
     
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cube_id: Mapped[int] = mapped_column(ForeignKey('cubes.id'))
+    question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
+    answer_id: Mapped[int] = mapped_column(ForeignKey('answers.id'))
+    time_add_answer: Mapped[datetime.datetime] = mapped_column(DateTime)
 
-# TODO должно быть что-то, что сохраняет ответы юзера
-
-
+    cube = relationship('Cube', backref='testings')
+    question = relationship('Question', backref='testings')
+    answer = relationship('Answer', backref='testings')
 
 async def create_all_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-# asyncio.run(create_all_tables())
+asyncio.run(create_all_tables())

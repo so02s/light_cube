@@ -1,6 +1,8 @@
 from create_bot import Session
 from db_handler.models import Moder, Quiz, Question, Answer
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+import datetime
 
 # ----админские
 
@@ -33,102 +35,73 @@ async def del_moder(name):
 # -----модерские
 
 async def get_quizs():
-    session = Session()
-    try:
-        async with session:
-            result = await session.scalars(select(Quiz))
-            return [quiz.name for quiz in result]
-    finally:
+    async with Session() as session:
+        result = await session.scalars(select(Quiz))
         await session.close()
+        return result.all()
 
+async def get_quiz(name: str) -> Quiz:
+    async with Session() as session:
+        quiz_obj = await session.scalars(select(Quiz).where(Quiz.name == name))
+        await session.close()
+        return quiz_obj.first()
 
-async def add_quiz(quiz):
+async def add_quiz(name: str) -> None:
     async with Session() as session:
         async with session.begin():
-            quiz_obj = Quiz(name=quiz)
+            quiz_obj = Quiz(name=name, start_datetime=datetime.datetime.utcnow())
             session.add(quiz_obj)
-            await session.commit()
 
-async def del_quiz(quiz):
-    session = Session()
-    try:
-        async with session:
-            quiz_obj = (await session.scalars(select(Quiz).where(Quiz.name == quiz))).first()
-            if quiz_obj:
-                await session.delete(quiz_obj)
-                await session.commit()
-    finally:
-        await session.close()
-
-async def add_question(time, question, quiz):
+async def del_quiz(quiz_obj: Quiz) -> None:
     async with Session() as session:
-        quiz_obj = (await session.scalars(select(Quiz).where(Quiz.name == quiz))).first()
-        if quiz_obj:
+        async with session.begin():
+            await session.delete(quiz_obj)
+
+async def add_question(time: str, question: str, quiz_obj: Quiz) -> Question:
+    async with Session() as session:
+        async with session.begin():
             time_limit_minutes, time_limit_seconds = map(int, time.split(':'))
             question_obj = Question(text=question, quiz=quiz_obj, time_limit_seconds=time_limit_minutes * 60 + time_limit_seconds)
             session.add(question_obj)
-            await session.commit()
+            question_obj = await session.execute(select(Question).where(Question.quiz == quiz_obj, Question.text == question))
+            return question_obj.scalars().first()
 
-# async def add_question_time(time, question, quiz):
-#     async with Session() as session:
-#         quiz_obj = await session.scalars(Quiz.select().where(Quiz.name == quiz)).first()
-#         if quiz_obj:
-#             question_obj = await session.scalars(Question.select().where(Question.text == question)).first()
-#             if question_obj:
-#                 question_obj.time = time
-#                 await session.commit()
-
-async def add_answ(col, answer, question, quiz):
+async def add_answ(col: str, answer: str, question_obj: Question):
     async with Session() as session:
-        quiz_obj = (await session.scalars(select(Quiz).where(Quiz.name == quiz))).first()
-        if quiz_obj:
-            question_obj = (await session.scalars(select(Question).where(Question.text == question, Question.quiz == quiz_obj))).first()
-            if question_obj:
-                answer_obj = Answer(text=answer, question=question_obj, color=col)
-                session.add(answer_obj)
-                await session.commit()
+        async with session.begin():
+            answer_obj = Answer(text=answer, question=question_obj, color=col)
+            session.add(answer_obj)
 
-# async def add_answ_col(color, answer, question, quiz):
-#     async with Session() as session:
-#         quiz_obj = await session.scalars(Quiz.select().where(Quiz.name == quiz)).first()
-#         if quiz_obj:
-#             question_obj = await session.scalars(Question.select().where(Question.text == question, Question.quiz == quiz_obj)).first()
-#             if question_obj:
-#                 answer_obj = await session.scalars(Answer.select().where(Answer.text == answer, Answer.question == question_obj)).first()
-#                 if answer_obj:
-#                     answer_obj.color = color
-#                     await session.commit()
-
-async def get_questions(quiz):
+async def get_questions(quiz_obj: Quiz):
     async with Session() as session:
-        quiz_obj = (await session.scalars(select(Quiz).where(Quiz.name == quiz))).subquery()
-        quests_list = await session.scalars(Question.quiz_id.in_(quiz_obj))
-        return [question.text for question in quests_list]
+        result = await session.execute(select(Question).where(Question.quiz == quiz_obj).order_by(id))
+        session.close()
+        return result.scalars().all()
 
-async def del_question(question, quiz):
+async def del_question(question_obj: Question):
     async with Session() as session:
-        quiz_obj = (await session.scalars(select(Quiz).where(Quiz.name == quiz))).first()
-        if quiz_obj:
-            question_obj = (await session.scalars(select(Question).where(Question.text == question, Question.quiz == quiz_obj))).first()
-            if question_obj:
-                await session.delete(question_obj)
-                await session.commit()
+        async with session.begin():
+            await session.delete(question_obj)
 
-async def set_quiz_time(time, quiz):
+async def get_answers(question_obj: Question):
     async with Session() as session:
-        quiz_obj = (await session.scalars(select(Quiz).where(Quiz.name == quiz))).first()
-        if quiz_obj:
+        answer_list = await session.execute(select(Answer).where(Answer.question == question_obj))
+        session.close()
+        return answer_list.scalars().all()
+
+async def set_quiz_time(time: str, quiz:Quiz):
+    time = datetime.datetime.strptime(time, "%d.%m.%Y %H:%M:%S")
+    async with Session() as session:
+        async with session.begin():
             quiz_obj.time = time
-            await session.commit()
-
-async def get_quiz_time(quiz):
-    async with Session() as session:
-        quiz_obj = (await session.scalars(select(Quiz).where(Quiz.name == quiz))).first()
-        if quiz_obj:
-            return 'время квиза тип'
-            # return quiz_obj.start_datetime
 
 # юзерские
 
+async def get_cubes():
+    async with Session() as session:
+        cubes_list = await session.execute(select(Cubes))
+        session.close()
+        return cubes_list.scalars().all()
+        
 async def add_user_to_cube(id, cube):
     pass

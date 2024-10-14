@@ -3,6 +3,7 @@ from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, BotCommandScopeChat
 
 import re
+import datetime
 
 from utils.filter import admins, moders
 import keyboards.all_keyboards as kb
@@ -20,12 +21,14 @@ router = Router()
 async def cmd_start(msg: Message):
     try:
         result = await db.get_quizs()
-        if(result != []):
-            await msg.answer('Квизы:')
-            for i, el in enumerate(result):
-                await msg.answer(f'{i + 1}. {el}')
-        else:
+        if not result:
             await msg.answer('Нет квизов')
+            return
+
+        await msg.answer('Квизы:')
+        for i, el in enumerate(result):
+            await msg.answer(f'{i + 1}. {el.name}')
+
     except Exception as e:
         await msg.answer(f'Ошибка: {e}')
 
@@ -56,15 +59,15 @@ async def moder_chosen(msg: Message, state: FSMContext):
 async def cmd_start(msg: Message, state: FSMContext):
     try:
         quizs = await db.get_quizs()
-        if(quizs != []):
-            await msg.answer('Отмена на /cancel')
-            await msg.answer('Выберете квиз, который хотите удалить (номер):')
-            for i, quiz in enumerate(quizs):
-                await msg.answer(f'{i + 1}. {quiz}')
-            await state.set_state(DelQuiz.ch_name)
-        else:
+        if not quizs:
             await msg.answer('Нет квизов')
             await state.clear()
+            return
+        await msg.answer('Отмена на /cancel')
+        await msg.answer('Выберете квиз, который хотите удалить (номер):')
+        for i, quiz in enumerate(quizs):
+            await msg.answer(f'{i + 1}. {quiz.name}')
+        await state.set_state(DelQuiz.ch_name)
     except Exception as e:
         await msg.answer(f'Ошибка: {e}')
 
@@ -76,7 +79,7 @@ async def delquiz_chosen(msg: Message, state: FSMContext):
         if 0 <= index < len(quizs):
             chosen_quiz = quizs[index]
             await state.update_data(chosen=chosen_quiz)
-            await msg.answer(f'Вы выбрали квиз {chosen_quiz}')
+            await msg.answer(f'Вы выбрали квиз {chosen_quiz.name}')
             await msg.answer('Этот квиз вы хотите удалить? Введите "да" или "нет"')
             await state.set_state(DelQuiz.confirm)
         else:
@@ -89,10 +92,10 @@ async def delquiz_chosen(msg: Message, state: FSMContext):
 @router.message(DelQuiz.confirm)
 async def confirm_delquiz(msg: Message, state: FSMContext):
     if(msg.text.lower() == 'да'):
-        name = await state.get_data()
+        data = await state.get_data()
         try:
-            await db.del_quiz(name["chosen"])
-            await msg.answer(f'Квиз {name["chosen"]} удален')
+            await db.del_quiz(data["chosen"])
+            await msg.answer(f'Квиз {data["chosen"].name} удален')
         except Exception as e:
             await msg.answer(f'Произошла ошибка: {e}, попробуйте снова с самого начала')
         finally:
@@ -108,15 +111,19 @@ async def confirm_delquiz(msg: Message, state: FSMContext):
 
 @router.message(lambda msg: msg.from_user.username in admins() + moders(), StateFilter(None), Command("change_quiz"))
 async def ch_quiz(msg: Message, state: FSMContext):
-    quizs = await db.get_quizs()
-    if(quizs != []):
+    try:
+        quizs = await db.get_quizs()
+        if not quizs:
+            await msg.answer('Нет квизов')
+            await state.clear()
+            return
         await msg.answer('Отмена на /cancel')
         await msg.answer('Выберете квиз, который хотите изменить (номер):')
         for i, quiz in enumerate(quizs):
-            await msg.answer(f'{i + 1}. {quiz}')
+            await msg.answer(f'{i + 1}. {quiz.name}')
         await state.set_state(ChQuiz.ch_name)
-    else:
-        await msg.answer('Нет квизов')
+    except Exception as e:
+        await msg.answer(f'Ошибка: {e}')
         await state.clear()
 
 
@@ -128,7 +135,7 @@ async def ch_quiz(msg: Message, state: FSMContext):
         if 0 <= index < len(quizs):
             chosen_quiz = quizs[index]
             await state.update_data(chosen=chosen_quiz)
-            await msg.answer(f'Вы выбрали квиз "{chosen_quiz}"')
+            await msg.answer(f'Вы выбрали квиз "{chosen_quiz.name}"')
             await msg.answer('Выйти из меню изменения квиза на /cancel')
             await bot.set_my_commands(kb.commands_change_quiz(), BotCommandScopeChat(chat_id=msg.from_user.id))
             await state.set_state(ChQuiz.ch_action)
@@ -151,27 +158,27 @@ async def cancel_chosen(msg: Message, state: FSMContext):
 @router.message(ChQuiz.ch_action, Command("all_info"))
 async def show_q(msg: Message, state: FSMContext):
     data = await state.get_data()
+    quiz = data['chosen']
     try:
-        time = await db.get_quiz_time(data['chosen'])
+        time = quiz.start_datetime
         if time:
-            await msg.answer(f'Квиз запланирован на {time}')
-        result = await db.get_questions(data['chosen'])
-        if result == None:
+            await msg.answer(f'Квиз запланирован на\n {time}')
+        result = await db.get_questions(quiz)
+        if not result:
             await msg.answer('Нет вопросов')
             return
-        
+
         await msg.answer('Вопросы:')
+        # TODO вывод в порядке вопросов внутри квиза
         for i, el in enumerate(result):
-            await msg.answer(f'{i + 1}. {el}')
-            # TODO еще сколько времени дается на вопрос
+            await msg.answer(f'''{i + 1}. {el.text}\nВремя на выполнение - {el.time_limit_seconds // 60}:{el.time_limit_seconds % 60}''')
             answers = await db.get_answers(el)
-            if answers == None:
+            if not answers:
                 await msg.answer('Нет ответов для этого вопроса')
                 continue
             await msg.answer('Ответы:')
             for j, answer in enumerate(answers):
-                await msg.answer(f'     {j + 1}. {answer}')
-                # TODO еще цвет ответа
+                await msg.answer(f'     {j + 1}. {answer.text}, цвет - {answer.color}')
 
     except Exception as e:
         await msg.answer(f'Ошибка: {e}, вы возвращены на экран модератора')
@@ -196,18 +203,22 @@ async def add_q(msg: Message, state: FSMContext):
 @router.message(ChQuiz.add_q_time)
 async def add_q(msg: Message, state: FSMContext):
     data = await state.get_data()
-    time_format = re.match(r'^\d{1,2}:\d{2}$', msg.text)
-    if not time_format:
+    time_parts = msg.text.split(':')
+    if len(time_parts) != 2:
         await msg.answer('Неверный формат времени. Пожалуйста, введите время в формате "мм:сс".')
         return
-    
-    minutes, seconds = map(int, time_format.groups())
+    try:
+        minutes, seconds = map(int, time_parts)
+    except:
+        await msg.answer('Неверный формат времени. Пожалуйста, введите время в формате "мм:сс".')
+        return
     if not(0 <= minutes <= 59 and 0 <= seconds <= 59):
         await msg.answer('Неверное время. Пожалуйста, введите время в формате "мм:сс", где мм не больше 59 и сс не больше 59.')
         return
     
     try:
-        await db.add_question(msg.text, data['q_name'], data['chosen'])
+        question = await db.add_question(msg.text, data['q_name'], data['chosen'])
+        await state.update_data(q_name=question)
         await msg.answer('Вопрос добавлен.')
         await msg.answer('Введите ответ(остановка ввода на /stop):')
         await state.set_state(ChQuiz.add_answ)
@@ -217,12 +228,18 @@ async def add_q(msg: Message, state: FSMContext):
         await state.clear()
 
 
+
 # TODO state не может быть multiple()
-# стоп добавления ответов на вопрос
-# @router.message(lambda state: state in [ChQuiz.add_answ_color, ChQuiz.add_answ], Command("stop"))
-# async def stop(msg: Message, state: FSMContext):
-#     await msg.answer(f'Вы на экране изменения квиза. Чтобы выйти нажмите /cancel')
-#     await state.set_state(ChQuiz.ch_action)
+@router.message(ChQuiz.add_answ_color, Command("stop"))
+async def stop(msg: Message, state: FSMContext):
+    await msg.answer(f'Вы на экране изменения квиза. Чтобы выйти нажмите /cancel')
+    await state.set_state(ChQuiz.ch_action)
+@router.message(ChQuiz.add_answ, Command("stop"))
+async def stop(msg: Message, state: FSMContext):
+    await msg.answer(f'Вы на экране изменения квиза. Чтобы выйти нажмите /cancel')
+    await state.set_state(ChQuiz.ch_action)
+
+
 
 # + текст ответа
 @router.message(ChQuiz.add_answ)
@@ -234,14 +251,15 @@ async def add_answ(msg: Message, state: FSMContext):
 # + цвет. добавление ответа в бд
 @router.message(ChQuiz.add_answ_color)
 async def add_answ(msg: Message, state: FSMContext):
+    color = msg.text
     data = await state.get_data()
     hex_pattern = re.compile(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$')
-    if not hex_pattern.match(msg.text):
+    if not hex_pattern.match(color):
         await msg.answer('Неправильный формат цвета. Пожалуйста, введите цвет в формате HEX (например, #FFFFFF или #FFF).')
         return
     
     try:
-        await db.add_answ(msg.text, data['answ'], data['q_name'], data['chosen'])
+        await db.add_answ(color, data['answ'], data['q_name'])
         await msg.answer('Ответ добавлен')
         await msg.answer('Введите следующий ответ(остановка ввода на /stop):')
         await state.set_state(ChQuiz.add_answ)
@@ -275,7 +293,7 @@ async def del_q(msg: Message, state: FSMContext):
             return
         chosen_questions = questions[index]
         await state.update_data(del_q=chosen_questions)
-        await msg.answer(f'Вы выбрали вопрос "{chosen_questions}"')
+        await msg.answer(f'Вы выбрали вопрос "{chosen_questions.text}"')
         await msg.answer('Этот вопрос вы хотите удалить? Введите "да" или "нет"')
         await state.set_state(ChQuiz.del_q_confirm)
     except ValueError:
@@ -290,8 +308,8 @@ async def del_q(msg: Message, state: FSMContext):
     if(msg.text.lower() == 'да'):
         data = await state.get_data()
         try:
-            await db.del_question(data["del_q"], data["chosen"])
-            await msg.answer(f'Вопрос {data["del_q"]} удален')
+            await db.del_question(data["del_q"])
+            await msg.answer(f'Вопрос {data["del_q"].text} удален')
             await state.set_state(ChQuiz.ch_action)
         except Exception as e:
             await msg.answer(f'Произошла ошибка: {e}, вы возвращены на экран модератора')
@@ -327,7 +345,7 @@ async def ch_quiz(msg: Message, state: FSMContext):
         return
     try:
         await db.set_quiz_time(msg.text, data["chosen"])
-        await msg.answer(f'Время начала квиза {data["chosen"]} установлено на {msg.text}')
+        await msg.answer(f'Время начала квиза {data["chosen"].name} установлено на {msg.text}')
         await state.set_state(ChQuiz.ch_action)
     except Exception as e:
         await msg.answer(f'Произошла ошибка: {e}, вы возвращены на экран модератора')
@@ -343,7 +361,7 @@ async def st_quiz(msg: Message, state: FSMContext):
         if quizs:
             await msg.answer('Выберете квиз:')
             for i, quiz in enumerate(quizs):
-                await msg.answer(f'{i + 1}. {quiz}')
+                await msg.answer(f'{i + 1}. {quiz.name}')
             await state.set_state(StQuiz.ch_name)
         else:
             await msg.answer('Нет квизов')
@@ -372,7 +390,7 @@ async def st_quiz(msg: Message, state: FSMContext):
         await state.clear()
 
 
-# -------- Режим юзера 
+# -------- Режим юзера
 
 @router.message(lambda msg: msg.from_user.username in moders(), Command("user"))
 async def cmd_start(msg: Message):

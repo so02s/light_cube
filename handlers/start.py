@@ -27,10 +27,12 @@ async def cmd_start_mod(msg: Message):
 async def cmd_start(msg: Message):
     args = msg.get_args()
     reference = decode_payload(args)
-    # TODO проверка на есть пользователь у куба
-    await db.add_user_to_cube(msg.from_user.id, reference)
-    await msg.answer(f"Добро пожаловать на квиз!")
-    
+    # TODO проверка на есть пользователь у куба - стоит ли
+    try:
+        await db.add_user_to_cube(msg.from_user.id, reference)
+        await msg.answer(f"Добро пожаловать на квиз!")
+    except:
+        pass
     
 # TODO 
 # @router.message(lambda msg: msg.from_user.username in users(), CommandStart())
