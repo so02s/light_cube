@@ -1,10 +1,10 @@
 from aiogram import Router, F
 from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, BotCommandScopeChat
-
+from aiogram.utils.deep_linking import create_start_link, decode_payload
 from aiogram.fsm.context import FSMContext
 
-from utils.filter import admins, moders, refresh_moders
+from utils.filter import is_admin, refresh_moders
 import keyboards.all_keyboards as kb
 from mqtt.mqtt_handler import wled_publish
 from fms.admin_fms import Group, AddModer, DelModer
@@ -17,7 +17,7 @@ router = Router()
 # ------ Отмена действия 
 # TODO добавить списки переходов
 
-@router.message(lambda msg: msg.from_user.username in admins(), Command("cancel"))
+@router.message(is_admin, Command("cancel"))
 async def cancel_chosen(msg: Message, state: FSMContext):
     await msg.answer('Вы отменили действие')
     await bot.set_my_commands(kb.commands_admin(), BotCommandScopeChat(chat_id=msg.from_user.id))
@@ -25,7 +25,7 @@ async def cancel_chosen(msg: Message, state: FSMContext):
 
 # ------ Добавление модератора
 
-@router.message(lambda msg: msg.from_user.username in admins(), StateFilter(None), Command("add_moder"))
+@router.message(is_admin, StateFilter(None), Command("add_moder"))
 async def cmd_start(msg: Message, state: FSMContext):
     await msg.answer('Отмена на /cancel')
     await msg.answer('Добавьте имя:')
@@ -44,7 +44,7 @@ async def addmoder_chosen(msg: Message, state: FSMContext):
 
 # -------- Вывод всех модераторов
 
-@router.message(lambda msg: msg.from_user.username in admins(), StateFilter(None), Command("all_moder"))
+@router.message(is_admin, StateFilter(None), Command("all_moder"))
 async def cmd_start(msg: Message):
     result = moders()
     if(result != []):
@@ -57,7 +57,7 @@ async def cmd_start(msg: Message):
 
 # ------- Удаление модератора
 
-@router.message(lambda msg: msg.from_user.username in admins(), StateFilter(None), Command("del_moder"))
+@router.message(is_admin, StateFilter(None), Command("del_moder"))
 async def cmd_start(msg: Message, state: FSMContext):
     await msg.answer('Отмена на /cancel')
     await msg.answer('Выберете модератора (индекс):')
@@ -101,7 +101,7 @@ async def confirm_delmoder(msg: Message, state: FSMContext):
 
 # ----- Режим модератора
 
-@router.message(lambda msg: msg.from_user.username in admins(), Command("moder"))
+@router.message(is_admin, Command("moder"))
 async def cmd_start(msg: Message, state: FSMContext):
     await msg.answer('Включен режим модератора. Для возвращения напишите /cancel')
     await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
@@ -110,7 +110,7 @@ async def cmd_start(msg: Message, state: FSMContext):
 
 # ---- Режим юзера
 
-@router.message(lambda msg: msg.from_user.username in admins(), Command("user"))
+@router.message(is_admin, Command("user"))
 async def cmd_start(msg: Message, state: FSMContext):
     await bot.set_my_commands(kb.commands_user(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await msg.answer('Включен режим юзера. Для возвращения напишите /cancel')
@@ -119,7 +119,7 @@ async def cmd_start(msg: Message, state: FSMContext):
 
 # ------ Включение ламп
 
-@router.message(lambda msg: msg.from_user.username in admins(), StateFilter(None), Command("on"))
+@router.message(is_admin, StateFilter(None), Command("on"))
 async def cmd_start(msg: Message, state: FSMContext):
     # TODO добавить клаву для удобства
     await msg.answer('Отмена на /cancel')
@@ -141,7 +141,7 @@ async def group_chosen(msg: Message, state: FSMContext):
 
 # ------ Выключение ламп
 
-@router.message(lambda msg: msg.from_user.username in admins(), Command("off"))
+@router.message(is_admin, Command("off"))
 async def cmd_start(msg: Message):
     # TODO написать название группы ламп
     await wled_publish("cubes", "OFF")
@@ -149,10 +149,9 @@ async def cmd_start(msg: Message):
     await msg.answer('Все выключено')
 
 
+# ------- Рандом цвет всего
 
-
-
-@router.message(lambda msg: msg.from_user.username in admins(), Command("random"))
+@router.message(is_admin, Command("random"))
 async def cmd_start(msg: Message):
     r = lambda: random.randint(150,255)
     # TODO написать название группы ламп
@@ -162,11 +161,17 @@ async def cmd_start(msg: Message):
     await msg.answer('Цвет зарандомлен')
 
 
+# ------ Генерация реферальных ссылок для кубов от 1 до 120
 
-
-
-
-@router.message(lambda msg: msg.from_user.username in admins(), Command("deep_link"))
+@router.message(is_admin, Command("deep_link"))
 async def cmd_start(msg: Message):
-    # TODO добавление payload
-    await msg.answer('Реферальная ссылка:')
+    refs='Реферальные ссылки:\n'
+    end = 6
+    for i in range(1, end):
+        link = await create_start_link(bot, f'cube_{i}', encode=True)
+        refs += f'{i}. ' + link +'\n'
+        if len(refs) > 4000:
+            await msg.answer(refs)
+            refs = ''
+        if i == end - 1:
+            await msg.answer(refs)

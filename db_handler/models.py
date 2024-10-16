@@ -2,10 +2,10 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger, DateTime, TypeDecorator, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import backref
 import datetime
 import asyncio
 from create_bot import engine, Session
-
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
@@ -26,12 +26,12 @@ class Quiz(Base):
 class Question(Base):
     __tablename__ = 'questions'
     
-    quiz_id: Mapped[int] = mapped_column(ForeignKey('quizs.id'), primary_key=True)
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     text: Mapped[str]
     time_limit_seconds: Mapped[int] = mapped_column()
+    quiz_id: Mapped[int] = mapped_column(ForeignKey('quizs.id'))
     
-    quiz = relationship('Quiz', backref='questions')
+    quiz = relationship('Quiz', backref=backref('questions', cascade="all,delete"))
 
     @property
     def time_limit(self):
@@ -44,8 +44,9 @@ class Answer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
     color: Mapped[str]
+    is_correct: Mapped[bool]
     question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
-    question = relationship('Question', backref='answers')
+    question = relationship('Question', backref=backref('answers', cascade="all,delete"))
 
 class Cube(Base):
     __tablename__ = "cubes"
@@ -57,22 +58,21 @@ class Cube(Base):
     status: Mapped[str] = mapped_column()
 
 
-class Testing(Base):
-    __tablename__ = "testing"
+# class Testing(Base):
+#     __tablename__ = "testing"
     
-    id: Mapped[int] = mapped_column(primary_key=True)
-    cube_id: Mapped[int] = mapped_column(ForeignKey('cubes.id'))
-    question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
-    answer_id: Mapped[int] = mapped_column(ForeignKey('answers.id'))
-    time_add_answer: Mapped[datetime.datetime] = mapped_column(DateTime)
+#     id: Mapped[int] = mapped_column(primary_key=True)
+#     cube_id: Mapped[int] = mapped_column(ForeignKey('cubes.id'))
+#     question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
+#     answer_id: Mapped[int] = mapped_column(ForeignKey('answers.id'))
+#     time_add_answer: Mapped[datetime.datetime] = mapped_column(DateTime)
 
-    cube = relationship('Cube', backref='testings')
-    question = relationship('Question', backref='testings')
-    answer = relationship('Answer', backref='testings')
+#     cube = relationship('Cube', backref='testings')
+#     question = relationship('Question', backref='testings')
+#     answer = relationship('Answer', backref='testings')
+
 
 async def create_all_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-
-asyncio.run(create_all_tables())

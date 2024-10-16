@@ -5,6 +5,7 @@ import re
 admins_username = []
 moders_username = []
 
+
 async def refresh_moders() -> None:
     global moders_username
     try:
@@ -16,7 +17,7 @@ async def refresh_moders() -> None:
 async def refresh_admins() -> None:
     global admins_username
     try:
-        admins_username = []
+        admins_username = ['SpicySad']
     except Exception as e:
         print(f"Error: {e}")
 
@@ -27,3 +28,8 @@ def moders() -> list:
 def admins() -> list:
     global admins_username
     return admins_username
+
+
+is_moder = lambda msg: msg.from_user.username in moders()
+is_admin = lambda msg: msg.from_user.username in admins()
+is_admin_or_moder = lambda msg: msg.from_user.username in admins() + moders()

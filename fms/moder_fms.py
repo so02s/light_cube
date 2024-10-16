@@ -13,6 +13,7 @@ class ChQuiz(StatesGroup):
     add_q = State()
     add_q_time = State()
     add_answ = State()
+    add_answ_correct = State()
     add_answ_color = State()
     del_q = State()
     del_q_confirm = State()

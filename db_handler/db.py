@@ -1,5 +1,5 @@
 from create_bot import Session
-from db_handler.models import Moder, Quiz, Question, Answer
+from db_handler.models import Moder, Quiz, Question, Answer, Cube
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 import datetime
@@ -9,7 +9,7 @@ import datetime
 async def add_moder(name) -> None:
     async with Session() as session:
         async with session.begin():
-            session.add(Moder(name=name))
+            await session.add(Moder(name=name))
 
 async def get_moders():
     session = Session()
@@ -50,7 +50,7 @@ async def add_quiz(name: str) -> None:
     async with Session() as session:
         async with session.begin():
             quiz_obj = Quiz(name=name, start_datetime=datetime.datetime.utcnow())
-            session.add(quiz_obj)
+            await session.add(quiz_obj)
 
 async def del_quiz(quiz_obj: Quiz) -> None:
     async with Session() as session:
@@ -62,20 +62,20 @@ async def add_question(time: str, question: str, quiz_obj: Quiz) -> Question:
         async with session.begin():
             time_limit_minutes, time_limit_seconds = map(int, time.split(':'))
             question_obj = Question(text=question, quiz=quiz_obj, time_limit_seconds=time_limit_minutes * 60 + time_limit_seconds)
-            session.add(question_obj)
+            await session.add(question_obj)
             question_obj = await session.execute(select(Question).where(Question.quiz == quiz_obj, Question.text == question))
             return question_obj.scalars().first()
 
-async def add_answ(col: str, answer: str, question_obj: Question):
+async def add_answ(col: str, answer: str, is_correct: bool, question_obj: Question):
     async with Session() as session:
         async with session.begin():
-            answer_obj = Answer(text=answer, question=question_obj, color=col)
-            session.add(answer_obj)
+            answer_obj = Answer(text=answer, question=question_obj, color=col, is_correct=is_correct)
+            await session.add(answer_obj)
 
 async def get_questions(quiz_obj: Quiz):
     async with Session() as session:
-        result = await session.execute(select(Question).where(Question.quiz == quiz_obj).order_by(id))
-        session.close()
+        result = await session.execute(select(Question).where(Question.quiz == quiz_obj)) # .order_by(id)
+        await session.close()
         return result.scalars().all()
 
 async def del_question(question_obj: Question):
@@ -86,7 +86,7 @@ async def del_question(question_obj: Question):
 async def get_answers(question_obj: Question):
     async with Session() as session:
         answer_list = await session.execute(select(Answer).where(Answer.question == question_obj))
-        session.close()
+        await session.close()
         return answer_list.scalars().all()
 
 async def set_quiz_time(time: str, quiz:Quiz):
@@ -99,9 +99,12 @@ async def set_quiz_time(time: str, quiz:Quiz):
 
 async def get_cubes():
     async with Session() as session:
-        cubes_list = await session.execute(select(Cubes))
-        session.close()
+        cubes_list = await session.execute(select(Cube))
+        await session.close()
         return cubes_list.scalars().all()
         
-async def add_user_to_cube(id, cube):
-    pass
+async def add_user_to_cube(id, username, user_id, connected_at, color='#808080'):
+    async with Session() as session:
+        async with session.begin():
+            cube_obj = Cube(id=id, username=username, user_id=user_id, connected_at=connected_at, status=color)
+            await session.add(cube_obj)
