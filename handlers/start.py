@@ -30,7 +30,7 @@ async def cmd_start(msg: Message):
     cube_id = int(reference.split('_')[-1])
     # TODO проверка на есть пользователь у куба - стоит ли
     try:
-        await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, reference)
+        await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, )
         await msg.answer(f"Добро пожаловать на квиз!")
     except:
         pass

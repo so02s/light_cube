@@ -103,8 +103,8 @@ async def get_cubes():
         await session.close()
         return cubes_list.scalars().all()
         
-async def add_user_to_cube(id, username, user_id, connected_at, color='#808080'):
+async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808080'):
     async with Session() as session:
         async with session.begin():
-            cube_obj = Cube(id=id, username=username, user_id=user_id, connected_at=connected_at, status=color)
+            cube_obj = Cube(id=cube_id, username=username, user_id=user_id, connected_at=connected_at, status=color)
             await session.add(cube_obj)
