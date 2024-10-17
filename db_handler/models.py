@@ -54,23 +54,26 @@ class Cube(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(nullable=True)
     user_id: Mapped[int] = mapped_column(nullable=True)
-    connected_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+    connected_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     status: Mapped[str] = mapped_column()
 
 
-# class Testing(Base):
-#     __tablename__ = "testing"
+class Testing(Base):
+    __tablename__ = "testing"
     
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     cube_id: Mapped[int] = mapped_column(ForeignKey('cubes.id'))
-#     question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
-#     answer_id: Mapped[int] = mapped_column(ForeignKey('answers.id'))
-#     time_add_answer: Mapped[datetime.datetime] = mapped_column(DateTime)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cube_id: Mapped[int] = mapped_column(ForeignKey('cubes.id'))
+    question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
+    answer_id: Mapped[int] = mapped_column(ForeignKey('answers.id'))
+    time_add_answer: Mapped[datetime.datetime] = mapped_column(DateTime)
 
-#     cube = relationship('Cube', backref='testings')
-#     question = relationship('Question', backref='testings')
-#     answer = relationship('Answer', backref='testings')
+    cube = relationship('Cube', backref='testings')
+    question = relationship('Question', backref='testings')
+    answer = relationship('Answer', backref='testings')
 
+    @property
+    def is_correct(self):
+        return self.answer.is_correct
 
 async def create_all_tables():
     async with engine.begin() as conn:

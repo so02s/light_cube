@@ -89,13 +89,18 @@ async def get_answers(question_obj: Question):
         await session.close()
         return answer_list.scalars().all()
 
-async def set_quiz_time(time: str, quiz:Quiz):
+async def set_quiz_time(time: str, quiz_obj: Quiz):
     time = datetime.datetime.strptime(time, "%d.%m.%Y %H:%M:%S")
     async with Session() as session:
         async with session.begin():
             quiz_obj.time = time
 
 # юзерские
+
+async def is_cube_empty(cube_id):
+    async with Session() as session:
+        result = await session.execute(select(Cube).filter(Cube.id == cube_id, Cube.user_id.isnot(None)))
+        return result.scalars().first() is None
 
 async def get_cubes():
     async with Session() as session:

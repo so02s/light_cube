@@ -305,6 +305,7 @@ async def del_q(msg: Message, state: FSMContext):
 
 @router.message(ChQuiz.del_q)
 async def del_q(msg: Message, state: FSMContext):
+    data = await state.get_data()
     try:
         index = int(msg.text) - 1
         questions = await db.get_question(data['chosen'])
@@ -413,7 +414,7 @@ async def st_quiz(msg: Message, state: FSMContext):
 # -------- Режим юзера
 
 @router.message(is_moder, Command("user"))
-async def cmd_start(msg: Message):
+async def cmd_start(msg: Message, state: FSMContext):
     await bot.set_my_commands(kb.commands_user(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await msg.answer('Включен режим юзера. Для возвращения напишите /cancel или /start')
     await state.clear()

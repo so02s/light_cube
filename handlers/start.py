@@ -2,11 +2,12 @@ from aiogram import Router, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, BotCommandScopeChat
 from aiogram.utils.deep_linking import decode_payload
+import datetime
 
 from utils.filter import is_admin, is_moder
 import keyboards.all_keyboards as kb
 from create_bot import bot
-import db_handler.db
+from db_handler import db
 
 router = Router()
 
@@ -28,12 +29,17 @@ async def cmd_start(msg: Message):
     args = msg.get_args()
     reference = decode_payload(args)
     cube_id = int(reference.split('_')[-1])
-    # TODO проверка на есть пользователь у куба - стоит ли
-    try:
-        await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, )
-        await msg.answer(f"Добро пожаловать на квиз!")
-    except:
-        pass
+    
+    if await db.is_cube_empty(cube_id):
+        try:
+            connected_at = datetime.datetime.now()
+            await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, connected_at)
+            await msg.answer("Добро пожаловать на квиз!")
+        except Exception as e:
+            await msg.answer("Произошла ошибка при подключении к кубу.")
+            print(e)
+    else:
+        await msg.answer("Куб уже занят другим пользователем.")
     
 # TODO 
 # @router.message(lambda msg: msg.from_user.username in users(), CommandStart())

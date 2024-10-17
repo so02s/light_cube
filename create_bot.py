@@ -14,7 +14,6 @@ logger=logging.getLogger(__name__)
 DATABASE_URL = f"postgresql+asyncpg://{config('DB_USER')}:{config('DB_PASS')}@{config('DB_HOST')}/{config('DB_NAME')}"
 engine = create_async_engine(url=DATABASE_URL, echo=True)
 Session = async_sessionmaker(engine, expire_on_commit=False)
-# db_manager = DatabaseManager(db_url=config('PG_LINK'), deletion_password=config('ROOT_PASS'))
 
 # инициализация бота
 bot = Bot(token=config('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
