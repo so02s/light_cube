@@ -17,7 +17,7 @@ async def refresh_moders() -> None:
 async def refresh_admins() -> None:
     global admins_username
     try:
-        admins_username = [config('ADMINS').split(',')]
+        admins_username = ['SpicySad']
     except Exception as e:
         print(f"Error: {e}")
 

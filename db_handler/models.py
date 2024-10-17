@@ -15,13 +15,13 @@ class Moder(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str]
-
+ 
 class Quiz(Base):
     __tablename__ = 'quizs'
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str]
-    start_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    start_datetime: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
 class Question(Base):
     __tablename__ = 'questions'
