@@ -9,7 +9,7 @@ import datetime
 async def add_moder(name) -> None:
     async with Session() as session:
         async with session.begin():
-            await session.add(Moder(name=name))
+            session.add(Moder(name=name))
 
 async def get_moders():
     session = Session()
@@ -50,7 +50,7 @@ async def add_quiz(name: str) -> None:
     async with Session() as session:
         async with session.begin():
             quiz_obj = Quiz(name=name, start_datetime=datetime.datetime.utcnow())
-            await session.add(quiz_obj)
+            session.add(quiz_obj)
 
 async def del_quiz(quiz_obj: Quiz) -> None:
     async with Session() as session:
@@ -62,7 +62,7 @@ async def add_question(time: str, question: str, quiz_obj: Quiz) -> Question:
         async with session.begin():
             time_limit_minutes, time_limit_seconds = map(int, time.split(':'))
             question_obj = Question(text=question, quiz=quiz_obj, time_limit_seconds=time_limit_minutes * 60 + time_limit_seconds)
-            await session.add(question_obj)
+            session.add(question_obj)
             question_obj = await session.execute(select(Question).where(Question.quiz == quiz_obj, Question.text == question))
             return question_obj.scalars().first()
 
@@ -70,7 +70,7 @@ async def add_answ(col: str, answer: str, is_correct: bool, question_obj: Questi
     async with Session() as session:
         async with session.begin():
             answer_obj = Answer(text=answer, question=question_obj, color=col, is_correct=is_correct)
-            await session.add(answer_obj)
+            session.add(answer_obj)
 
 async def get_questions(quiz_obj: Quiz):
     async with Session() as session:
@@ -107,4 +107,4 @@ async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808
     async with Session() as session:
         async with session.begin():
             cube_obj = Cube(id=cube_id, username=username, user_id=user_id, connected_at=connected_at, status=color)
-            await session.add(cube_obj)
+            session.add(cube_obj)
