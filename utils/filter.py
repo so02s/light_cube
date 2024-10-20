@@ -12,12 +12,11 @@ async def refresh_moders() -> None:
         moders_username = await get_moders()
     except Exception as e:
         print(f"Error: {e}")
-
-# TODO : подкачка не через конфиги, а через бд 
+        
 async def refresh_admins() -> None:
     global admins_username
     try:
-        admins_username = ['SpicySad']
+        admins_username = []
     except Exception as e:
         print(f"Error: {e}")
 

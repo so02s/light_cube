@@ -1,5 +1,5 @@
 from create_bot import Session
-from db_handler.models import Moder, Quiz, Question, Answer, Cube
+from db_handler.models import Moder, Quiz, Question, Answer, Cube, Testing
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 import datetime
@@ -94,6 +94,12 @@ async def set_quiz_time(time: str, quiz_obj: Quiz):
     async with Session() as session:
         async with session.begin():
             quiz_obj.time = time
+            
+async def get_users_answ(question_obj: Question):
+    async with Session() as session:
+        answer_list = await session.execute(select(Testing).where(Testing.question == question_obj))
+        await session.close()
+        return answer_list.scalars().all()
 
 # юзерские
 
@@ -113,3 +119,8 @@ async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808
         async with session.begin():
             cube_obj = Cube(id=cube_id, username=username, user_id=user_id, connected_at=connected_at, status=color)
             session.add(cube_obj)
+
+async def add_user_answ(cube_id, question_obj: Question, answer_obj: Answer):
+    async with Session() as session:
+        async with session.begin():
+            testing_obj = Testing(cube_id=cube_id, question_id=question_obj.id, answer_id=answer_obj.id, time_add_answer=datetime.datetime.utcnow())

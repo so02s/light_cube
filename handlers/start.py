@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.types import Message, BotCommandScopeChat
 from aiogram.utils.deep_linking import decode_payload
 import datetime
@@ -8,8 +8,10 @@ from utils.filter import is_admin, is_moder
 import keyboards.all_keyboards as kb
 from create_bot import bot
 from db_handler import db
+from handlers.quiz_handler import QuizMiddleware
 
 router = Router()
+router.message.middleware(QuizMiddleware())
 
 # Старт для админа
 @router.message(is_admin, Command("start"))
@@ -25,8 +27,8 @@ async def cmd_start_mod(msg: Message):
 
 # Старт для QR
 @router.message(CommandStart(deep_link=True))
-async def cmd_start(msg: Message):
-    args = msg.get_args()
+async def cmd_start(msg: Message, command: CommandObject):
+    args = command.args
     reference = decode_payload(args)
     cube_id = int(reference.split('_')[-1])
     
@@ -41,10 +43,6 @@ async def cmd_start(msg: Message):
     else:
         await msg.answer("Куб уже занят другим пользователем.")
     
-# TODO 
-# @router.message(lambda msg: msg.from_user.username in users(), CommandStart())
-# async def cmd_start(msg: Message):
-# #     # args = msg.get_args()
-# #     # reference = decode_payload(args)
-# #     # await add_user_to_cube(msg.from_user.id, reference)
-#     await msg.answer(f"Привет, {msg.from_user.username}")
+@router.message(CommandStart())
+async def cmd_start():
+    pass

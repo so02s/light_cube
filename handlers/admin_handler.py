@@ -1,18 +1,21 @@
 from aiogram import Router, F
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command, StateFilter, CommandObject
 from aiogram.types import Message, BotCommandScopeChat
 from aiogram.utils.deep_linking import create_start_link, decode_payload
 from aiogram.fsm.context import FSMContext
+import asyncio
 
-from utils.filter import is_admin, refresh_moders
+from utils.filter import is_admin, refresh_moders, moders
 import keyboards.all_keyboards as kb
 from mqtt.mqtt_handler import wled_publish
 from fms.admin_fms import Group, AddModer, DelModer
 import random
 from create_bot import bot
 from db_handler import db
+from handlers.quiz_handler import QuizMiddleware
 
 router = Router()
+router.message.middleware(QuizMiddleware())
 
 # ------ Отмена действия 
 # TODO добавить списки переходов
@@ -128,7 +131,8 @@ async def cmd_start(msg: Message, state: FSMContext):
 
 @router.message(Group.ch_name)
 async def group_chosen(msg: Message, state: FSMContext):
-    # TODO проверка на существование группы
+    data = state.get_data()
+    # TODO проверка на существование группы / выбор из списка в бд
     if(msg.text == 'all'):
         await wled_publish("cubes", "ON")
         await wled_publish("lamps", "ON")
@@ -142,7 +146,7 @@ async def group_chosen(msg: Message, state: FSMContext):
 # ------ Выключение ламп
 
 @router.message(is_admin, Command("off"))
-async def cmd_start(msg: Message):
+async def cmd_start(msg: Message, state: FSMContext):
     # TODO написать название группы ламп
     await wled_publish("cubes", "OFF")
     await wled_publish("lamps", "OFF")
@@ -160,18 +164,24 @@ async def cmd_start(msg: Message):
     await wled_publish("lamps/col", '#%02X%02X%02X' % (r(),r(),r()))
     await msg.answer('Цвет зарандомлен')
 
+# ------- Цвет всего
+
+@router.message(is_admin, Command("color"))
+async def cmd_start(msg: Message, command: CommandObject):
+    args = command.get_args()
+    # TODO проверка на существование цвета
+    await wled_publish("cubes/col", args[0])
+    await wled_publish("lamps/col", args[0])
+    await msg.answer('Цвет добавлен')
 
 # ------ Генерация реферальных ссылок для кубов от 1 до 120
 
 @router.message(is_admin, Command("deep_link"))
 async def cmd_start(msg: Message):
     refs='Реферальные ссылки:\n'
-    end = 6
+    end = 121
     for i in range(1, end):
+        if(i % 30 == 0):
+            asyncio.sleep(30)
         link = await create_start_link(bot, f'cube_{i}', encode=True)
-        refs += f'{i}. ' + link +'\n'
-        if len(refs) > 4000:
-            await msg.answer(refs)
-            refs = ''
-        if i == end - 1:
-            await msg.answer(refs)
+        await msg.answer(link)

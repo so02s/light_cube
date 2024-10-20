@@ -10,10 +10,11 @@ import keyboards.all_keyboards as kb
 from aiogram.fsm.context import FSMContext
 from fms.moder_fms import AddQuiz, DelQuiz, ChQuiz, StQuiz
 from db_handler import db
-from handlers.quiz_handler import start_quiz
+from handlers.quiz_handler import start_quiz, QuizMiddleware
 from create_bot import bot
 
 router = Router()
+router.message.middleware(QuizMiddleware())
 
 # -------- Вывод всех квизов
 
@@ -294,7 +295,7 @@ async def del_q(msg: Message, state: FSMContext):
     data = await state.get_data()
     try:
         questions = await db.get_question(data['chosen'])
-        await msg.answer('Выберете номер вопроса, который хотите удалить:')
+        await msg.answer('Выберете номер вопроса, который хотите удалить:\n(Либо отмените действие на /cancel)')
         for i, question in enumerate(questions):
             await msg.answer(f'{i + 1}. {question}')
         await state.set_state(ChQuiz.del_q)
@@ -310,7 +311,7 @@ async def del_q(msg: Message, state: FSMContext):
         index = int(msg.text) - 1
         questions = await db.get_question(data['chosen'])
         if not(0 <= index < len(questions)):
-            await msg.answer('Некорректный индекс. Пожалуйста, введите номер вопроса снова.')
+            await msg.answer('Некорректный индекс. Пожалуйста, введите номер вопроса снова.\nЛибо отмените действие на /cancel')
             return
         chosen_questions = questions[index]
         await state.update_data(del_q=chosen_questions)
@@ -318,7 +319,7 @@ async def del_q(msg: Message, state: FSMContext):
         await msg.answer('Этот вопрос вы хотите удалить? Введите "да" или "нет"')
         await state.set_state(ChQuiz.del_q_confirm)
     except ValueError:
-        await msg.answer('Некорректный ввод. Пожалуйста, введите номер вопроса.')
+        await msg.answer('Некорректный ввод. Пожалуйста, введите номер вопроса.\nЛибо отмените действие на /cancel')
     except Exception as e:
         await msg.answer(f'Произошла ошибка: {e}, вы возвращены на экран модератора')
         await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
@@ -340,7 +341,7 @@ async def del_q(msg: Message, state: FSMContext):
         await msg.answer('Напишите название вопроса, который хотите удалить:')
         await state.set_state(ChQuiz.del_q)
     else:
-        await msg.answer('Я не понимаю. Напишите "да" или "нет"')
+        await msg.answer('Я не понимаю. Напишите "да" или "нет"\nЛибо отмените действие на /cancel')
 
 
 # TODO Изменение вопросов
@@ -362,7 +363,7 @@ async def ch_quiz(msg: Message, state: FSMContext):
     try:
         datetime.datetime.strptime(msg.text, "%d.%m.%Y %H:%M:%S")
     except ValueError:
-        await msg.answer('Неправильный формат даты и времени. Пожалуйста, введите дату и время в формате "дд.мм.гггг чч:мм:сс"')
+        await msg.answer('Неправильный формат даты и времени. Пожалуйста, введите дату и время в формате "дд.мм.гггг чч:мм:сс"\nЛибо выйдете на /cancel')
         return
     try:
         await db.set_quiz_time(msg.text, data["chosen"])
@@ -397,14 +398,14 @@ async def st_quiz(msg: Message, state: FSMContext):
         index = int(msg.text) - 1
         quizs = await db.get_quizs()
         if not(0 <= index < len(quizs)):
-            await msg.answer('Некорректный индекс. Пожалуйста, введите номер вопроса снова.')
+            await msg.answer('Некорректный индекс. Пожалуйста, введите номер квиза снова, либо выйдите на /cancel')
             return
         chosen_quiz = quizs[index]
-        await start_quiz(chosen_quiz)
         await msg.answer('Квиз начат')
         await state.clear()
+        await start_quiz(chosen_quiz)
     except ValueError:
-        await msg.answer('Некорректный ввод. Пожалуйста, введите номер вопроса.')
+        await msg.answer('Некорректный ввод. Пожалуйста, введите номер квиза снова, либо выйдите на /cancel')
     except Exception as e:
         await msg.answer(f'Произошла ошибка: {e}, вы возвращены на экран модератора')
         await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
