@@ -1,11 +1,11 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger, DateTime, TypeDecorator, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import backref
 import datetime
-import asyncio
-from create_bot import engine, Session
+
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, DateTime, DateTime, UniqueConstraint
+from sqlalchemy.orm import backref
+
+from create_bot import engine
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
@@ -30,8 +30,13 @@ class Question(Base):
     text: Mapped[str]
     time_limit_seconds: Mapped[int] = mapped_column()
     quiz_id: Mapped[int] = mapped_column(ForeignKey('quizs.id'))
+    question_number: Mapped[int] = mapped_column(unique=True, nullable=False)
     
-    quiz = relationship('Quiz', backref=backref('questions', cascade="all,delete"))
+    quiz = relationship('Quiz', backref=backref('questions', cascade="all, delete"))
+
+    __table_args__ = (
+        UniqueConstraint('quiz_id', 'question_number', name='unique_question_number_in_quiz'),
+    )
 
     @property
     def time_limit(self):
@@ -46,7 +51,7 @@ class Answer(Base):
     color: Mapped[str]
     is_correct: Mapped[bool]
     question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
-    question = relationship('Question', backref=backref('answers', cascade="all,delete"))
+    question = relationship('Question', backref=backref('answers', cascade="all, delete"))
 
 class Cube(Base):
     __tablename__ = "cubes"
