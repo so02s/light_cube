@@ -30,7 +30,7 @@ class Question(Base):
     text: Mapped[str]
     time_limit_seconds: Mapped[int] = mapped_column()
     quiz_id: Mapped[int] = mapped_column(ForeignKey('quizs.id'))
-    question_number: Mapped[int] = mapped_column(unique=True, nullable=False)
+    question_number: Mapped[int] = mapped_column(nullable=False)
     
     quiz = relationship('Quiz', backref=backref('questions', cascade="all, delete"))
 
