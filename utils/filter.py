@@ -1,4 +1,3 @@
-from decouple import config
 from db_handler.db import get_moders
 import re
 
@@ -16,7 +15,7 @@ async def refresh_moders() -> None:
 async def refresh_admins() -> None:
     global admins_username
     try:
-        admins_username = []
+        admins_username = ['SpicySad']
     except Exception as e:
         print(f"Error: {e}")
 

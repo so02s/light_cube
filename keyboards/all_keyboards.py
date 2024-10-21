@@ -1,11 +1,11 @@
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from aiogram.types import BotCommand, BotCommandScopeDefault
+from aiogram.types import BotCommand
 
 def commands_admin():
     return [
                 BotCommand(command='start', description='Старт'), 
                 BotCommand(command='on', description='Включить свет'),
                 BotCommand(command='off', description='Выключить свет'),
+                BotCommand(command='color', description='Не забудь HEX'),
                 BotCommand(command='random', description='Поменять на рандомный цвет'),
                 BotCommand(command='deep_link', description='Создать реферальную ссылку'),
                 BotCommand(command='all_moder', description='Все модераторы'),

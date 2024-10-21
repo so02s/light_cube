@@ -2,11 +2,12 @@ import aioschedule
 from db_handler import db
 from db_handler.models import Quiz
 from aiogram.types import Message
-from aiogram import Router
-from aiogram import BaseMiddleware
+from aiogram import Router, BaseMiddleware
+from aiogram.filters import StateFilter, Command
 from create_bot import bot
 import asyncio
 import mqtt.mqtt_handler as mqtt
+from utils.filter import is_admin_or_moder
 
 quiz_active = False
 current_question = None

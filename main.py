@@ -1,19 +1,13 @@
 import asyncio
-import logging
-
-from aiogram.types import BotCommandScopeChat
 from create_bot import bot, dp
 from handlers import start, admin_handler, moder_handler, quiz_handler
-from keyboards import all_keyboards as kb
 from utils.filter import refresh_moders, refresh_admins
 
-from decouple import config
-
 async def start_bot():
-        pass
+    pass
 
 async def stop_bot():
-        pass
+    pass
 
 
 async def main():

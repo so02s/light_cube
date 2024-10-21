@@ -122,32 +122,32 @@ async def cmd_start(msg: Message, state: FSMContext):
 
 # ------ Включение ламп
 
-@router.message(is_admin, StateFilter(None), Command("on"))
-async def cmd_start(msg: Message, state: FSMContext):
-    # TODO добавить клаву для удобства
-    await msg.answer('Отмена на /cancel')
-    await msg.answer('Введите название группы:')
-    await state.set_state(Group.ch_name)
 
-@router.message(Group.ch_name)
-async def group_chosen(msg: Message, state: FSMContext):
-    data = state.get_data()
-    # TODO проверка на существование группы / выбор из списка в бд
-    if(msg.text == 'all'):
-        await wled_publish("cubes", "ON")
-        await wled_publish("lamps", "ON")
-        await msg.answer(text=f"Отлично! Свет во всех группах включен.")
-    else:
-        await wled_publish(msg.text, "ON")
-        await msg.answer(text=f"Отлично! Свет в группе {msg.text} включен.")
-    await state.clear()
+@router.message(is_admin, StateFilter(None), Command("on"))
+async def group_chosen(msg: Message, command: CommandObject):
+    args: str = command.args
+    if args:
+        group_name = args[0]
+        await wled_publish(group_name, "ON")
+        await msg.answer(text=f"Свет в группе {group_name} включен")
+        return
+    
+    await wled_publish("cubes", "ON")
+    await wled_publish("lamps", "ON")
+    await msg.answer('Все включено')
 
 
 # ------ Выключение ламп
 
 @router.message(is_admin, Command("off"))
-async def cmd_start(msg: Message, state: FSMContext):
-    # TODO написать название группы ламп
+async def cmd_start(msg: Message, command: CommandObject):
+    args: str = command.args
+    if args:
+        group_name = args[0]
+        await wled_publish(group_name, "OFF")
+        await msg.answer(f'Группа {group_name} выключена')
+        return
+    
     await wled_publish("cubes", "OFF")
     await wled_publish("lamps", "OFF")
     await msg.answer('Все выключено')
@@ -156,10 +156,14 @@ async def cmd_start(msg: Message, state: FSMContext):
 # ------- Рандом цвет всего
 
 @router.message(is_admin, Command("random"))
-async def cmd_start(msg: Message):
+async def random_color(msg: Message, command: CommandObject):
     r = lambda: random.randint(150,255)
-    # TODO написать название группы ламп
-    # TODO выбор из "рандомить для каждого" или "рандомить для группы"
+    args: str = command.args
+    if args:
+        group_name = args[0]
+        await wled_publish("cubes/" + group_name, '#%02X%02X%02X' % (r(),r(),r()))
+        return
+    
     await wled_publish("cubes/col", '#%02X%02X%02X' % (r(),r(),r()))
     await wled_publish("lamps/col", '#%02X%02X%02X' % (r(),r(),r()))
     await msg.answer('Цвет зарандомлен')
@@ -168,10 +172,20 @@ async def cmd_start(msg: Message):
 
 @router.message(is_admin, Command("color"))
 async def cmd_start(msg: Message, command: CommandObject):
-    args = command.get_args()
-    # TODO проверка на существование цвета
-    await wled_publish("cubes/col", args[0])
-    await wled_publish("lamps/col", args[0])
+    args: str = command.args
+    if not args:
+        await random_color(msg)
+        return
+    
+    color = args[0]
+    hex_color_pattern = re.compile(r'^#(?:[0-9a-fA-F]{3}){1,2}$')
+    if not hex_color_pattern.match(color):
+        await msg.answer('Неверный формат цвета. Пожалуйста, используйте HEX формат (например, #FF5733).')
+        return
+    
+    # TODO группа
+    await wled_publish("cubes/col", color)
+    await wled_publish("lamps/col", color)
     await msg.answer('Цвет добавлен')
 
 # ------ Генерация реферальных ссылок для кубов от 1 до 120
