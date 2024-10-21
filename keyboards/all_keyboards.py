@@ -2,17 +2,18 @@ from aiogram.types import BotCommand
 
 def commands_admin():
     return [
-                BotCommand(command='start', description='Старт'), 
+                BotCommand(command='start', description='Старт'),
+                BotCommand(command='help', description='Помощь'),
+                BotCommand(command='moder', description='Режим модератора'),
+                BotCommand(command='user', description='Режим юзера'),
                 BotCommand(command='on', description='Включить свет'),
                 BotCommand(command='off', description='Выключить свет'),
-                BotCommand(command='color', description='Не забудь HEX'),
+                BotCommand(command='color', description='Установка цвета'),
                 BotCommand(command='random', description='Поменять на рандомный цвет'),
                 BotCommand(command='deep_link', description='Создать реферальную ссылку'),
                 BotCommand(command='all_moder', description='Все модераторы'),
                 BotCommand(command='add_moder', description='Добавить модератора'),
-                BotCommand(command='del_moder', description='Удалить модератора'),
-                BotCommand(command='moder', description='Режим модератора'),
-                BotCommand(command='user', description='Режим юзера')]
+                BotCommand(command='del_moder', description='Удалить модератора')]
 
 def commands_moder():
     return [

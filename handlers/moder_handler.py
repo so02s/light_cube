@@ -16,6 +16,23 @@ from create_bot import bot
 router = Router()
 router.message.middleware(QuizMiddleware())
 
+# ------ Помощь
+
+@router.message(is_moder, Command("help"))
+async def help_moder(msg: Message):
+    await msg.answer('''
+/start - стартовое сообщение
+/help - помощь, выводит это сообщение
+/user - переключиться в режим юзера (тебе приходят вопросы с квиза)
+/all_quiz - вывести все квизы
+/start_quiz {name} - начать квиз name, без аргумента перекидывает в выбор квиза
+/add_quiz {name} {start_time} - добавить квиз name с началом в time, без аргумента спрашивает и про название, и про время
+/del_quiz {name} - удаляет квиз name (с подтверждением), если нет аргумента, то дает выбрать квиз для удаления
+/change_quiz {name} - изменить квиз name, если нет аргумента, то дает выбрать квиз
+/cancen - отмена действия
+''')
+
+
 # -------- Вывод всех квизов
 
 @router.message(is_admin_or_moder, StateFilter(None), Command("all_quiz"))
