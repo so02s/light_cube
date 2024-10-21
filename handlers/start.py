@@ -14,12 +14,14 @@ router = Router()
 router.message.middleware(QuizMiddleware())
 
 # Старт для админа
+# TODO добавить удаление из проверки ответов квиза
 @router.message(is_admin, Command("start"))
 async def cmd_start_adm(msg: Message):
     await bot.set_my_commands(kb.commands_admin(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await msg.answer('Привет админ! Открой меню для взаимодействия с ботом. Там есть все команды')
 
 # Старт для модератора
+# TODO добавить удаление из проверки ответов квиза
 @router.message(is_moder, Command("start"))
 async def cmd_start_mod(msg: Message):
     await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))

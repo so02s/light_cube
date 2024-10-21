@@ -24,7 +24,7 @@ async def help_admin(msg: Message):
     await msg.answer('''========= Команды модератора ========
 /all_quiz - вывести все квизы
 /start_quiz {name} - начать квиз name, без аргумента перекидывает в выбор квиза
-/add_quiz {name} {start_time} - добавить квиз name с началом в time, без аргумента спрашивает и про название, и про время
+/add_quiz {name} - добавить квиз name с началом в time, без аргумента спрашивает и про название, и про время
 /del_quiz {name} - удаляет квиз name (с подтверждением), если нет аргумента, то дает выбрать квиз для удаления
 /change_quiz {name} - изменить квиз name, если нет аргумента, то дает выбрать квиз
 ''')
@@ -46,7 +46,9 @@ async def help_admin(msg: Message):
 
 # ------ Отмена действия 
 
-@router.message(is_admin, Command("cancel"), StateFilter(DelModer.ch_name, DelModer.confirm))
+@router.message(Command("cancel"),
+                StateFilter(DelModer.ch_name,
+                            DelModer.confirm))
 async def cancel_chosen(msg: Message, state: FSMContext):
     await msg.answer('Вы отменили действие')
     await bot.set_my_commands(kb.commands_admin(), BotCommandScopeChat(chat_id=msg.from_user.id))
@@ -56,7 +58,7 @@ async def cancel_chosen(msg: Message, state: FSMContext):
 
 @router.message(is_admin, StateFilter(None), Command("moder"))
 async def cmd_start(msg: Message):
-    await msg.answer('Включен режим модератора. Для возвращения напишите /cancel')
+    await msg.answer('Включен режим модератора. Для возвращения напишите /start')
     await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
 
 # ---- Режим юзера
@@ -64,7 +66,7 @@ async def cmd_start(msg: Message):
 @router.message(is_admin, StateFilter(None), Command("user"))
 async def cmd_start(msg: Message):
     await bot.set_my_commands(kb.commands_user(), BotCommandScopeChat(chat_id=msg.from_user.id))
-    await msg.answer('Включен режим юзера. Для возвращения напишите /cancel')
+    await msg.answer('Включен режим юзера. Для возвращения напишите /start')
 
 # -------- Вывод всех модераторов
 
