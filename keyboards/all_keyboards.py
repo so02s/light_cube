@@ -18,6 +18,8 @@ def commands_admin():
 def commands_moder():
     return [
                 BotCommand(command='start', description='Старт'), 
+                BotCommand(command='help', description='Помощь'),
+                BotCommand(command='change_program', description='Изменить сообщение о программе мероприятия. Еще не работает'),
                 BotCommand(command='all_quiz', description='Вывести все квизы'),
                 BotCommand(command='start_quiz', description='Начать квиз'),
                 BotCommand(command='add_quiz', description='Добавить квиз'),
@@ -28,6 +30,7 @@ def commands_moder():
 def commands_change_quiz():
     return [
                 BotCommand(command='cancel', description='Выход из изменения квиза'),
+                BotCommand(command='help_change_quiz', description='Помощь'),
                 BotCommand(command='all_info', description='Информация о квизе'),
                 BotCommand(command='add_question', description='Добавить вопрос'), 
                 BotCommand(command='del_question', description='Удалить вопрос'),

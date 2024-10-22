@@ -22,11 +22,13 @@ router.message.middleware(QuizMiddleware())
 @router.message(is_admin, Command("help"))
 async def help_admin(msg: Message):
     await msg.answer('''========= Команды модератора ========
+/change_program - изменить сообщение о программе мероприятия. Еще не работает
 /all_quiz - вывести все квизы
 /start_quiz {name} - начать квиз name, без аргумента перекидывает в выбор квиза
 /add_quiz {name} - добавить квиз name с началом в time, без аргумента спрашивает и про название, и про время
 /del_quiz {name} - удаляет квиз name (с подтверждением), если нет аргумента, то дает выбрать квиз для удаления
 /change_quiz {name} - изменить квиз name, если нет аргумента, то дает выбрать квиз
+/cancel - отмена действия
 ''')
     await msg.answer('''========= Команды администратора ========
 /start - стартовое сообщение
@@ -38,10 +40,11 @@ async def help_admin(msg: Message):
 /color {HEX} {group} - изменяет цвет группы на выставленный, если нет аргумента, то на рандомный
 /random {group} - изменяет цвет группы на рандомный, если нет аргумента, то все группы
 /deep_link - генерирует 120 реферальных ссылок на кубы (специально на мероприятие)
+/deep_link_program - генерирует реферальную ссылу на программу (специально на мероприятие)
 /all_moder - выводит всех модераторов
 /add_moder {name} - добавляет модератора name
 /del_moder - дает удалить модератора на выбор
-/cancen - отмена действия
+/cancel - отмена действия
 ''')
 
 # ------ Отмена действия 
@@ -219,10 +222,14 @@ async def cmd_start(msg: Message, command: CommandObject):
 
 @router.message(is_admin, StateFilter(None), Command("deep_link"))
 async def cmd_start(msg: Message):
-    refs='Реферальные ссылки:\n'
     end = 121
     for i in range(1, end):
         if(i % 30 == 0):
             await asyncio.sleep(30)
         link = await create_start_link(bot, f'cube_{i}', encode=True)
         await msg.answer(link)
+        
+@router.message(is_admin, StateFilter(None), Command("deep_link_program"))
+async def cmd_start(msg: Message):
+    link = await create_start_link(bot, f'program', encode=True)
+    await msg.answer(link)

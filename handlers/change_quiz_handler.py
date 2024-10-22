@@ -1,7 +1,7 @@
 import re, datetime
 
 from aiogram import Router
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command, StateFilter, CommandObject
 from aiogram.types import Message, BotCommandScopeChat
 from aiogram.fsm.context import FSMContext
 
@@ -36,11 +36,24 @@ async def cancel_chosen(msg: Message, state: FSMContext):
 async def help_chosen(msg: Message):
     await msg.answer('''========= Команды изменения квиза ========
 /all_info - вывод информации о квизе
-/add_question - добавить вопрос в квиз
-/del_question - удалить вопрос из квиза
-/change_question - изменить вопрос
-/change_start_time - изменить время начала квиза
-/cancen - выход из изменения квиза
+/add_question {text} {time в мм:сс} - добавить вопрос в квиз с временем на ответ time, если аргументов нет - спрашивается по очереди
+/del_question {text} - удалить вопрос из квиза с подтверждением, если аргумента нет - дается выбор
+/change_question {text} - изменить вопрос, если аргумента нет - дается выбор
+/change_start_time {time в "дд.мм.гггг чч:мм:сс"} - изменить время начала квиза, если аргумента нет - прямо спрашивается
+/cancel - выход из изменения квиза
+/help_change_quiz - это сообщение
+''')
+
+@router.message(ChQuiz.ch_q,
+                Command("help_change_quiz"))
+async def help_chosen(msg: Message):
+    await msg.answer('''========= Команды изменения квиза ========
+/question_info - вывод информации о вопросе
+/change_time {time в мм:сс} - изменить время на вопрос, если аргумента нет - прямо спрашивается
+/add_answer {text} {is_correct} {color в HEX} - добавить ответ (текст ответа, правильность, цвет в HEX), если аргументов нет - спрашивается по очереди. Если нет правильного ответа, ставьте 0
+/del_answer {text} - удалить ответ с подтверждением, если аргумента нет - дается выбор
+/change_answer {text} - изменить ответ, если аргумента нет - дается выбор
+/cancel - выход из изменения вопроса
 ''')
 
 # ----- Вывод всей информации о квизе
@@ -54,7 +67,10 @@ async def show_q(msg: Message, state: FSMContext):
     time = quiz.start_datetime
     if time:
         formatted_time = time.strftime('%d.%m.%Y в %H:%M')
-        await msg.answer(f'Квиз запланирован на\n{formatted_time}')
+        if formatted_time.startswith('01.01.2026'):
+            await msg.answer('Этот квиз не запланирован на ближайшее время')
+        else:
+            await msg.answer(f'Квиз запланирован на\n{formatted_time}')
         
     try:
         result = await db.get_questions(quiz)
@@ -75,6 +91,7 @@ async def show_q(msg: Message, state: FSMContext):
                 correct = "Правильный ответ" if answer.is_correct else "Неправильный ответ"
                 answers_text += f'{answer.text}\n{correct}\nЦвет - {answer.color}\n\n'
             await msg.answer(answers_text)
+            
     except Exception as e:
         await msg.answer(f'Ошибка: {e}, вы возвращены на экран модератора')
         await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
@@ -83,7 +100,33 @@ async def show_q(msg: Message, state: FSMContext):
 # ----- Добавление вопроса в квиз
 @router.message(ChQuiz.ch_action,
                 Command("add_question"))
-async def add_q(msg: Message, state: FSMContext):
+async def add_q(msg: Message, state: FSMContext, command: CommandObject):
+    args: str = command.args
+    if args:
+        args_list = args.split(' ')
+        if len(args_list) < 2:
+            await msg.answer('Неправильный формат команды. Попробуйте снова\n/add_question {text} {time в мм:сс}')
+            return
+        question_text = args_list[0]
+        question_time = args_list[1]
+        time_parts = question_time.split(':')
+        if len(time_parts) != 2:
+            await msg.answer('Неверный формат времени. Пожалуйста, введите время в формате "мм:сс".')
+            return
+        try:
+            minutes, seconds = map(int, time_parts)
+        except:
+            await msg.answer('Неверный формат времени. Пожалуйста, введите время в формате "мм:сс".')
+            return
+        if not(0 <= minutes <= 59 and 0 <= seconds <= 59):
+            await msg.answer('Неверное время. Пожалуйста, введите время в формате "мм:сс", где мм не больше 59 и сс не больше 59.')
+            return
+        
+        quiz = (await state.get_data())['chosen']
+        question = await db.add_question(question_time, question_text, quiz)
+        await msg.answer('Вопрос добавлен.')
+        return
+    
     await msg.answer('Отмена на /cancel\nВведите вопрос:')
     await state.set_state(ChQuiz.add_q)
 
@@ -122,24 +165,15 @@ async def add_q(msg: Message, state: FSMContext):
     await msg.answer('Введите ответ(остановка ввода на /stop):')
     await state.set_state(ChQuiz.add_answ)
 
+# ------ Выход из добавления ответов
 
-
-# TODO state не может быть multiple()
-@router.message(ChQuiz.add_answ_color,
+@router.message(StateFilter(ChQuiz.add_answ_color,
+                            ChQuiz.add_answ,
+                            ChQuiz.add_answ_correct),
                 Command("stop"))
 async def stop(msg: Message, state: FSMContext):
     await msg.answer(f'Вы на экране изменения квиза. Чтобы выйти нажмите /cancel')
     await state.set_state(ChQuiz.ch_action)
-@router.message(ChQuiz.add_answ, Command("stop"))
-async def stop(msg: Message, state: FSMContext):
-    await msg.answer(f'Вы на экране изменения квиза. Чтобы выйти нажмите /cancel')
-    await state.set_state(ChQuiz.ch_action)
-@router.message(ChQuiz.add_answ_correct, Command("stop"))
-async def stop(msg: Message, state: FSMContext):
-    await msg.answer(f'Вы на экране изменения квиза. Чтобы выйти нажмите /cancel')
-    await state.set_state(ChQuiz.ch_action)
-
-
 
 # + текст ответа
 @router.message(ChQuiz.add_answ)
@@ -182,6 +216,7 @@ async def add_answ(msg: Message, state: FSMContext):
         await state.clear()
 
 # ------ Удаление вопроса
+
 @router.message(ChQuiz.ch_action,
                 Command("del_question"))
 async def del_q(msg: Message, state: FSMContext):
@@ -248,6 +283,26 @@ async def ch_quiz(msg: Message, state: FSMContext):
 @router.message(ChQuiz.ch_action,
                 Command("change_start_time"))
 async def ch_quiz(msg: Message, state: FSMContext):
+    args: str = command.args
+    if args:
+        args_list = args.split(' ')
+        time = args_list[0]
+        try:
+            datetime.datetime.strptime(time, "%d.%m.%Y %H:%M:%S")
+        except ValueError:
+            await msg.answer('Неправильный формат даты и времени. Пожалуйста, введите дату и время в формате "дд.мм.гггг чч:мм:сс"')
+            return
+        
+        quiz = (await state.get_data())['chosen']
+        try:
+            await db.set_quiz_time(time, quiz)
+            await msg.answer(f'Время начала квиза {quiz.name} установлено на {time}')
+        except Exception as e:
+            await msg.answer(f'Произошла ошибка: {e}, вы возвращены на экран модератора')
+            await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
+            await state.clear()
+        return
+    
     await msg.answer('Введите дату и время начала квиза (формат "дд.мм.гггг чч:мм:сс")')
     await msg.answer('Пример: 16.10.2024 16:30:00')
     await state.set_state(ChQuiz.ch_time)

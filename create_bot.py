@@ -16,5 +16,5 @@ engine = create_async_engine(url=DATABASE_URL, echo=True)
 Session = async_sessionmaker(engine, expire_on_commit=False)
 
 # инициализация бота
-bot = Bot(token=config('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(token=config('TOKEN_BOT'), default=DefaultBotProperties(parse_mode=ParseMode.HTML)) 
 dp = Dispatcher()

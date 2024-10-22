@@ -23,12 +23,13 @@ async def help_moder(msg: Message):
 /start - стартовое сообщение
 /help - помощь, выводит это сообщение
 /user - переключиться в режим юзера (тебе приходят вопросы с квиза)
+/change_program - изменить сообщение о программе мероприятия. Еще не работает
 /all_quiz - вывести все квизы
 /start_quiz {name} - начать квиз name, без аргумента перекидывает в выбор квиза
 /add_quiz {name} - добавить квиз name с началом в time, без аргумента спрашивает и про название, и про время
 /del_quiz {name} - удаляет квиз name (с подтверждением), если нет аргумента, то дает выбрать квиз для удаления
 /change_quiz {name} - изменить квиз name, если нет аргумента, то дает выбрать квиз
-/cancen - отмена действия
+/cancel - отмена действия
 ''')
 
 # ------ Отмена действий
@@ -52,6 +53,13 @@ async def cmd_start(msg: Message, state: FSMContext):
     await bot.set_my_commands(kb.commands_user(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await msg.answer('Включен режим юзера. Для возвращения напишите /start')
     await state.clear()
+
+# -------- Изменить сообщение о программе мероприятия
+# TODO еще добавление файла/картинки/каким-то образом копирование сообщения от пользователя и его сохранение
+@router.message(is_admin_or_moder, StateFilter(None), Command("change_program"))
+async def cmd_start(msg: Message):
+    pass
+
 
 # -------- Вывод всех квизов
 
@@ -269,3 +277,5 @@ async def ch_quiz(msg: Message, state: FSMContext):
         await msg.answer('Некорректный ввод. Пожалуйста, введите номер квиза, либо выйдите на /cancel')
     except Exception as e:
         await msg.answer(f'Ошибка: {e}')
+        
+# TODO вывод результатов квиза

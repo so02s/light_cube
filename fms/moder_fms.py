@@ -17,8 +17,8 @@ class ChQuiz(StatesGroup):
     add_answ_color = State()
     del_q = State()
     del_q_confirm = State()
-    ch_q = State()
     ch_time = State()
+    ch_q = State()
 
 class StQuiz(StatesGroup):
     ch_name = State()

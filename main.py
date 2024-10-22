@@ -31,3 +31,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
+#TODO старт квизов по времени - нужно разобраться как

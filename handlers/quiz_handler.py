@@ -7,7 +7,7 @@ from aiogram.filters import StateFilter, Command
 from create_bot import bot
 import asyncio
 import mqtt.mqtt_handler as mqtt
-from utils.filter import is_admin_or_moder
+from utils.filter import is_admin_or_moder, is_quiz_user
 
 quiz_active = False
 current_question = None
@@ -16,14 +16,14 @@ class QuizMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         if quiz_active:
             await event.answer("Сейчас идет квиз")
-            await event.answer("Вы можете его остановить на /stop_quiz")
+            # await event.answer("Вы можете его остановить на /stop_quiz")
             return
         return await handler(event, data)
 
 class QuizMiddlewareAnsware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         if not quiz_active:
-            await event.answer("Квиз еще не начался")
+            # await event.answer("Квиз еще не начался")
             return
         return await handler(event, data)
     
@@ -31,18 +31,22 @@ router = Router()
 
 router.message.middleware(QuizMiddlewareAnsware())
 
-# TODO как остановить функцию?
+# TODO как остановить квиз
 @router.message(is_admin_or_moder, StateFilter(None), Command("stop_quiz"))
 async def handle_stop(message: Message):
     pass
 
 
-@router.message(StateFilter(None))
-async def handle_user_response(message: Message):    
+@router.message(is_quiz_user, StateFilter(None))
+async def handle_user_response(message: Message):
     cube_id = message.from_user.id
-
+    
     global current_question
     answers = await db.get_answers(current_question)
+    
+    # Проверка на давал ответ или нет
+    
+    # Если да, остановить выполнение хэндлера
     
     try:
         index_answ = int(message.text)
@@ -87,11 +91,7 @@ async def start_quiz(quiz_obj: Quiz):
         
         await asyncio.sleep(question.time_limit_seconds)
         
-        await mqtt.cube_off()
-        
-        
-        cube_answers = db.get_users_answ(current_question)
-        # await asyncio.sleep(10)
+        cube_answers = await db.get_users_answ(current_question)
         for cube in cubes:
             await mqtt.cube_publish_by_id(cube.id, '#808080')
         
@@ -100,5 +100,9 @@ async def start_quiz(quiz_obj: Quiz):
             await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
         
         await mqtt.cube_on()
+        await asyncio.sleep(10)
+        await mqtt.cube_off()
     
     quiz_active = False
+    # TODO возможно вывод в канал результата сидящих в зале?
+    # Либо конкретному модератору

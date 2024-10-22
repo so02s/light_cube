@@ -95,7 +95,8 @@ async def add_answ(col: str, answer: str, is_correct: bool, question_obj: Questi
 async def get_questions(quiz_obj: Quiz):
     async with Session() as session:
         result = await session.execute(select(Question)
-                                       .where(Question.quiz == quiz_obj)) # .order_by(id)
+                                       .where(Question.quiz == quiz_obj)
+                                       .order_by(Question.question_number))
         await session.close()
         return result.scalars().all()
 
