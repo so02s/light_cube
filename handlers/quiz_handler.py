@@ -44,14 +44,15 @@ async def handle_user_response(message: Message):
     global current_question
     answers = await db.get_answers(current_question)
     
-    # Проверка на давал ответ или нет
-    
-    # Если да, остановить выполнение хэндлера
+    user_answer = await db.get_user_answ(cube_id, current_question)
+    if user_answer:
+        # await bot.send_message(cube_id, "Вы уже ответили на этот вопрос")
+        return
     
     try:
         index_answ = int(message.text)
-        if 0 <= index_answ < len(answers):
-            user_answer = answers[index_answ]
+        if 1 <= index_answ <= len(answers):
+            user_answer = answers[index_answ - 1]
             await db.add_user_answ(cube_id, current_question, user_answer)
             await bot.send_message(cube_id, f"Вы ответили:\n{user_answer.text}\nСкоро выведут правильные ответы, подождите")
         else:

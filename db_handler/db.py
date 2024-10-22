@@ -159,3 +159,12 @@ async def add_user_answ(cube_id, question_obj: Question, answer_obj: Answer) -> 
                                   answer_id=answer_obj.id,
                                   time_add_answer=datetime.datetime.utcnow())
             session.add(testing_obj)
+            
+            
+async def get_user_answ(cube_id, current_question: Question):
+    async with Session() as session:
+        result = await session.execute(
+            select(Testing).where(
+                Testing.cube_id == cube_id,
+                Testing.question_id == current_question.id))
+        return result.scalars().first()

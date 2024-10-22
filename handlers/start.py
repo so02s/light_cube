@@ -19,6 +19,7 @@ async def cmd_start(msg: Message, command: CommandObject):
     args = command.args
     reference = decode_payload(args)
     
+    # TODO функция для этой штуки
     if(reference == 'program'):
         await msg.answer('Привет! Тут будет программа.')
         return
@@ -49,7 +50,3 @@ async def cmd_start_adm(msg: Message):
 async def cmd_start_mod(msg: Message):
     await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await msg.answer('Привет!\nВы - модератор! Вы можете открыть меню с доступными вам командами.')
-
-# @router.message(CommandStart())
-# async def cmd_start():
-#     pass

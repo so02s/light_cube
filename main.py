@@ -17,7 +17,8 @@ async def schedule_quizzes():
                 start_quiz,
                 'date',
                 run_date=quiz.start_datetime,
-                args=[quiz]
+                args=[quiz],
+                id=f"{quiz.id}"
             )
 
 async def start_bot():

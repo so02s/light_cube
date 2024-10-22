@@ -32,28 +32,43 @@ async def cancel_chosen(msg: Message, state: FSMContext):
 # ----- Помощь
 
 @router.message(ChQuiz.ch_action,
-                Command("help_change_quiz"))
+                Command("help"))
 async def help_chosen(msg: Message):
     await msg.answer('''========= Команды изменения квиза ========
+/cancel - выход из изменения квиза
+/help - это сообщение
 /all_info - вывод информации о квизе
 /add_question {text} {time в мм:сс} - добавить вопрос в квиз с временем на ответ time, если аргументов нет - спрашивается по очереди
 /del_question {text} - удалить вопрос из квиза с подтверждением, если аргумента нет - дается выбор
 /change_question {text} - изменить вопрос, если аргумента нет - дается выбор
 /change_start_time {time в "дд.мм.гггг чч:мм:сс"} - изменить время начала квиза, если аргумента нет - прямо спрашивается
-/cancel - выход из изменения квиза
-/help_change_quiz - это сообщение
 ''')
 
+# TODO добавить этот функционал
 @router.message(ChQuiz.ch_q,
-                Command("help_change_quiz"))
+                Command("help"))
 async def help_chosen(msg: Message):
     await msg.answer('''========= Команды изменения квиза ========
+/cancel - выход из изменения вопроса
+/help - это сообщение
 /question_info - вывод информации о вопросе
 /change_time {time в мм:сс} - изменить время на вопрос, если аргумента нет - прямо спрашивается
 /add_answer {text} {is_correct} {color в HEX} - добавить ответ (текст ответа, правильность, цвет в HEX), если аргументов нет - спрашивается по очереди. Если нет правильного ответа, ставьте 0
 /del_answer {text} - удалить ответ с подтверждением, если аргумента нет - дается выбор
 /change_answer {text} - изменить ответ, если аргумента нет - дается выбор
-/cancel - выход из изменения вопроса
+''')
+    
+# TODO
+@router.message(ChQuiz.ch_answ,
+                Command("help"))
+async def help_chosen(msg: Message):
+    await msg.answer('''========= Команды изменения ответа ========
+/cancel - выход из изменения ответа
+/help - это сообщение
+/answer_info - вывод информации о ответе
+/change_correctness - изменить правильность ответа
+/change_text - изменить текст ответа
+/change_color - изменить цвет ответа
 ''')
 
 # ----- Вывод всей информации о квизе

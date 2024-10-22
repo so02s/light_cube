@@ -11,6 +11,7 @@ import keyboards.all_keyboards as kb
 from db_handler import db
 from fms.moder_fms import AddQuiz, DelQuiz, ChQuiz, StQuiz
 from handlers.quiz_handler import start_quiz, QuizMiddleware
+from main import scheduler
 
 router = Router()
 router.message.middleware(QuizMiddleware())
@@ -22,13 +23,13 @@ async def help_moder(msg: Message):
     await msg.answer('''
 /start - стартовое сообщение
 /help - помощь, выводит это сообщение
-/user - переключиться в режим юзера (тебе приходят вопросы с квиза)
 /change_program - изменить сообщение о программе мероприятия. Еще не работает
 /all_quiz - вывести все квизы
 /start_quiz {name} - начать квиз name, без аргумента перекидывает в выбор квиза
 /add_quiz {name} - добавить квиз name с началом в time, без аргумента спрашивает и про название, и про время
 /del_quiz {name} - удаляет квиз name (с подтверждением), если нет аргумента, то дает выбрать квиз для удаления
 /change_quiz {name} - изменить квиз name, если нет аргумента, то дает выбрать квиз
+/user - переключиться в режим юзера (тебе приходят вопросы с квиза)
 /cancel - отмена действия
 ''')
 
@@ -58,7 +59,7 @@ async def cmd_start(msg: Message, state: FSMContext):
 # TODO еще добавление файла/картинки/каким-то образом копирование сообщения от пользователя и его сохранение
 @router.message(is_admin_or_moder, StateFilter(None), Command("change_program"))
 async def cmd_start(msg: Message):
-    pass
+    await msg.answer('Функция еще не добавлена')
 
 
 # -------- Вывод всех квизов
@@ -133,13 +134,21 @@ async def st_quiz(msg: Message, state: FSMContext):
     await start_quiz(chosen_quiz)
 
 # -------- Добавление квиза
-# TODO в schedule добавлять задание 
 @router.message(is_admin_or_moder, StateFilter(None), Command("add_quiz"))
 async def cmd_start(msg: Message, state: FSMContext, command: CommandObject):
     args: str = command.args
     if args:
         quiz_name = args.split(' ')[0]
         await db.add_quiz(quiz_name)
+        # Для добавления таски нужен apscheduler-di
+        # quiz = await db.get_quiz(quiz_name)
+        # scheduler.add_job(
+        #     start_quiz,
+        #     'date',
+        #     run_date=quiz.start_datetime,
+        #     args=[quiz],
+        #     id=f"{quiz.id}"
+        # )
         await msg.answer(f'Добавлен квиз {quiz_name}')
         return
     
@@ -151,13 +160,22 @@ async def cmd_start(msg: Message, state: FSMContext, command: CommandObject):
 async def moder_chosen(msg: Message, state: FSMContext):
     try:
         await db.add_quiz(msg.text)
+        # Для добавления таски нужен apscheduler-di
+        # quiz = await db.get_quiz(msg.text)
+        # scheduler.add_job(
+        #     start_quiz,
+        #     'date',
+        #     run_date=quiz.start_datetime,
+        #     args=[quiz],
+        #     id=f"{quiz.id}"
+        # )
         await msg.answer(f'Добавлен квиз {msg.text}')
         await state.clear()
     except Exception as e:
         await msg.answer(f'Ошибка: {e}')
 
 # -------- Удаление квиза
-# TODO в schedule удалять задание
+
 @router.message(is_admin_or_moder,
                 StateFilter(None),
                 Command("del_quiz"))
@@ -213,6 +231,8 @@ async def confirm_delquiz(msg: Message, state: FSMContext):
         data = await state.get_data()
         try:
             await db.del_quiz(data["chosen"])
+            # job_name = data['chosen'].id
+            # scheduler.remove_job(job_name)
             await msg.answer(f'Квиз {data["chosen"].name} удален')
         except Exception as e:
             await msg.answer(f'Произошла ошибка: {e}, попробуйте снова с самого начала')
