@@ -81,27 +81,38 @@ async def start_quiz(quiz_obj: Quiz):
         for cube in cubes:
             await bot.send_message(cube.user_id, text)
         
+        correct_answers = [id for id, answer in enumerate(answers) if answer.is_correct]
+        poll_options = [answer.text for answer in answers]
+        type_poll = 'regular'
+        if len(correct_answers) == 1:
+            type_poll = 'quiz'
+            
         await bot.send_poll(
             chat_id=-1002481450341,
             question=question.text,
             options=[answer.text for answer in answers],
             is_anonymous=True,
+            type=type_poll,
+            correct_option_id=correct_answers[0],
             disable_notification=False
         )
         
         await asyncio.sleep(question.time_limit_seconds)
         
         cube_answers = await db.get_users_answ(current_question)
-        for cube in cubes:
-            await mqtt.cube_publish_by_id(cube.id, '#808080')
-        
-        for cube_answer in cube_answers:
-            # TODO Может быть ошибка в обращении к объекту, проверить
-            await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
-        
-        await mqtt.cube_on()
-        await asyncio.sleep(10)
-        await mqtt.cube_off()
+        try:
+            for cube in cubes:
+                await mqtt.cube_publish_by_id(cube.id, '#808080')
+            
+            for cube_answer in cube_answers:
+                # TODO Может быть ошибка в обращении к объекту, проверить
+                await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
+            
+            await mqtt.cube_on()
+            await asyncio.sleep(10)
+            await mqtt.cube_off()
+        except:
+            print('Welp, MQTT not connect to bot')
     
     quiz_active = False
     # TODO возможно вывод в канал результата сидящих в зале?

@@ -49,11 +49,12 @@ async def get_quiz(name: str) -> Quiz:
         await session.close()
         return quiz_obj.first()
 
-async def add_quiz(name: str) -> None:
+async def add_quiz(name: str, time: str = '31.12.2026 19:00') -> None:
+    start_datetime = datetime.datetime.strptime(time, '%d.%m.%Y %H:%M')
     async with Session() as session:
         async with session.begin():
             quiz_obj = Quiz(name=name,
-                            start_datetime=datetime.datetime(2026, 1, 1))
+                            start_datetime=start_datetime)
             session.add(quiz_obj)
 
 async def del_quiz(quiz_obj: Quiz) -> None:

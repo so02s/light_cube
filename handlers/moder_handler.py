@@ -133,7 +133,7 @@ async def st_quiz(msg: Message, state: FSMContext):
     await start_quiz(chosen_quiz)
 
 # -------- Добавление квиза
-
+# TODO в schedule добавлять задание 
 @router.message(is_admin_or_moder, StateFilter(None), Command("add_quiz"))
 async def cmd_start(msg: Message, state: FSMContext, command: CommandObject):
     args: str = command.args
@@ -157,7 +157,7 @@ async def moder_chosen(msg: Message, state: FSMContext):
         await msg.answer(f'Ошибка: {e}')
 
 # -------- Удаление квиза
-
+# TODO в schedule удалять задание
 @router.message(is_admin_or_moder,
                 StateFilter(None),
                 Command("del_quiz"))
