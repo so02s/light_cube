@@ -14,113 +14,10 @@ from handlers.quiz_handler import start_quiz, QuizMiddleware
 from handlers.scheduler_handler import schedule_add_job, schedule_del_job
 
 
-from mqtt.mqtt_handler import wled_publish, blink_cubes, cube_on, cube_off
+
 
 router = Router()
 router.message.middleware(QuizMiddleware())
-
-# inline changer
-
-async def inline_kb(callback: CallbackQuery, text: str, kb):
-    await callback.message.edit_text(text, reply_markup=kb)
-
-# ============== INLINE CALLBACS =============
-
-
-# -------- Управление кубами ------------
-
-@router.callback_query(F.data == 'cube_management')
-async def cube_handler(callback: CallbackQuery):
-    await inline_kb(
-        callback,
-        "Управление кубами",
-        kb.get_cube_keyboard()
-    )
-
-@router.callback_query(F.data == 'cube_on')
-async def cube_handler(callback: CallbackQuery):
-    await cube_on()
-    
-@router.callback_query(F.data == 'cube_off')
-async def cube_handler(callback: CallbackQuery):
-    await cube_off()
-
-@router.callback_query(F.data == 'cube_presets')
-async def cube_handler(callback: CallbackQuery):
-    await inline_kb(
-        callback,
-        "Пресеты",
-        kb.get_color_blink_keyboard()
-    )
-
-@router.callback_query(F.data.startswith('color_'))
-async def cubes_color(callback: CallbackQuery):
-    color = F.data.split('_')[1]
-    await wled_publish('cubes', color)
-
-@router.callback_query(F.data == 'blink_on')
-async def cubes_color(callback: CallbackQuery):
-    await blink_cubes()
-
-@router.callback_query(F.data == 'blink_off')
-async def cubes_color(callback: CallbackQuery):
-    await cube_on()
-    
-
-
-# -------- Управление квизом ------------
-
-@router.callback_query(F.data == 'quiz_management')
-async def quiz_handler(callback: CallbackQuery):
-    await callback.message.answer("quiz")
-    print("quiz")
-    pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-
-
-
-
-
-
 
 
 # ------ Помощь
@@ -130,15 +27,15 @@ async def quiz_handler(callback: CallbackQuery):
                 Command("help"))
 async def help_moder(msg: Message):
     await msg.answer('''
-# /start - стартовое сообщение
-# /help - помощь, выводит это сообщение
-# /change_program - изменить сообщение о программе мероприятия. Еще не работает
-# /all_quiz - вывести все квизы
-# /start_quiz - начать квиз
-# /add_quiz - добавить квиз
-# /del_quiz - удаляет квиз
-# /change_quiz - изменить квиз
-# /cancel - отмена действия
+/start - стартовое сообщение
+/help - помощь, выводит это сообщение
+/change_program - изменить сообщение о программе мероприятия. Еще не работает
+/all_quiz - вывести все квизы
+/start_quiz - начать квиз
+/add_quiz - добавить квиз
+/del_quiz - удаляет квиз
+/change_quiz - изменить квиз
+/cancel - отмена действия
 ''')
 
 # ------ Отмена действий
@@ -388,6 +285,3 @@ async def ch_quiz(msg: Message, state: FSMContext):
         await msg.answer(f'Ошибка: {e}')
         
 # TODO вывод результатов квиза
-
-
-'''

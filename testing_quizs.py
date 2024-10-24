@@ -74,7 +74,7 @@ async def add_testing_quizs():
 
 async def main():
     await db.add_moder('SpicySad')
-    await add_testing_quizs()
+    # await add_testing_quizs()
 
 if __name__ == "__main__":
     asyncio.run(main())

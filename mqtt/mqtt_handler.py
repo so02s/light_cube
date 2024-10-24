@@ -2,8 +2,11 @@ import aiomqtt
 from decouple import config
 
 async def wled_publish(topic, msg):
-    async with aiomqtt.Client(config('MQTT_HOST')) as client:
-        await client.publish("wled/" + topic, payload=msg)
+    try:
+        async with aiomqtt.Client(config('MQTT_HOST')) as client:
+            await client.publish("wled/" + topic, payload=msg)
+    except:
+        print("Error: MQTT is not connected")
 
 
 # Управление кубами

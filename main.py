@@ -2,7 +2,7 @@ import asyncio
 from handlers.scheduler_handler import schedule_quizzes, start_scheduler
 from utils.filter import refresh_moders, refresh_admins
 from create_bot import bot, dp
-from handlers import start, admin_handler, moder_handler, change_quiz_handler, quiz_handler
+from handlers import start, cube_control, quiz_control, change_quiz_handler, quiz_handler
 
 async def start_bot():
     start_scheduler()
@@ -17,8 +17,8 @@ async def main():
     
     dp.include_routers(
         start.router,
-        admin_handler.router,
-        moder_handler.router,
+        cube_control.router,
+        quiz_control.router,
         change_quiz_handler.router,
         quiz_handler.router
     )

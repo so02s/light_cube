@@ -59,5 +59,3 @@ async def cmd_start_adm(msg: Message):
 @router.message(is_moder, Command("start"))
 async def cmd_start_mod(msg: Message):
     await msg.answer("Привет, модератор!\n\nВыберите действие", reply_markup=kb.get_management_keyboard())
-    # await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
-    # await msg.answer('Привет!\nВы - модератор! Вы можете открыть меню с доступными вам командами.')
