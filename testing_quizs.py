@@ -38,7 +38,7 @@ async def add_testing_quizs():
     
     
     # Квиз по программированию
-    await db.add_quiz('Программирование', "22.10.2024 19:55")
+    await db.add_quiz('Программирование', "24.10.2024 19:55")
     quiz2 = await db.get_quiz('Программирование')
 
     quest_2_1 = await db.add_question('0:30', 'Какой язык программирования используется для веб-разработки, выполняемый на стороне клиента?', quiz2)
@@ -73,6 +73,7 @@ async def add_testing_quizs():
     
 
 async def main():
+    await db.add_moder('SpicySad')
     await add_testing_quizs()
 
 if __name__ == "__main__":

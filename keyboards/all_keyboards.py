@@ -1,4 +1,7 @@
-from aiogram.types import BotCommand
+from aiogram.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from typing import Optional
+from aiogram.filters.callback_data import CallbackData
 
 def commands_admin():
     return [
@@ -18,6 +21,69 @@ def commands_admin():
                 BotCommand(command='cancel', description='Отмена действия')
             ]
 
+def get_management_keyboard():
+    buttons = [
+        [
+            InlineKeyboardButton(text="Управление кубами", callback_data="cube_management")
+        ],
+        [
+            InlineKeyboardButton(text="Управление квизом", callback_data="quiz_management")
+        ]
+        # ,
+        # [
+        #     InlineKeyboardButton(text="Помощь", callback_data="help_me")
+        # ]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+def get_cube_keyboard():
+    buttons = [
+        [
+            InlineKeyboardButton(text="Вкл", callback_data="cube_on"),
+            InlineKeyboardButton(text="Выкл", callback_data="cube_off")
+        ],
+        [
+            InlineKeyboardButton(text="Пресеты", callback_data="cube_presets")
+        ]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+def get_color_blink_keyboard():
+    buttons = [
+        [
+            InlineKeyboardButton(text="Назад", callback_data="cube_management")
+        ],
+        [
+            InlineKeyboardButton(text="Вкл мигание", callback_data="blink_on"),
+            InlineKeyboardButton(text="Выкл мигание", callback_data="blink_off")
+        ],
+        [
+            InlineKeyboardButton(text="Красный", callback_data="color_#FF0000"),
+            InlineKeyboardButton(text="Синий", callback_data="color_#0000CD"),
+            InlineKeyboardButton(text="Желтый", callback_data="color_#FFFF00")
+        ],
+        [
+            InlineKeyboardButton(text="Оранжевый", callback_data="color_#FF4500"),
+            InlineKeyboardButton(text="Зеленый", callback_data="color_#00FF00"),
+            InlineKeyboardButton(text="Фиолетовый", callback_data="color_#800080")
+        ],
+        [
+            InlineKeyboardButton(text="Голубой", callback_data="color_#20B2AA"),
+            InlineKeyboardButton(text="Розовый", callback_data="color_#FF00FF"),
+            InlineKeyboardButton(text="Песочный", callback_data="color_#F0E68C")
+        ],
+        [
+            InlineKeyboardButton(text="Черный", callback_data="color_#000000"),
+            InlineKeyboardButton(text="Белый", callback_data="color_#FFFFFF")
+        ]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+
 def commands_moder():
     return [
                 BotCommand(command='start', description='Старт'), 
@@ -28,7 +94,7 @@ def commands_moder():
                 BotCommand(command='add_quiz', description='Добавить квиз'),
                 BotCommand(command='del_quiz', description='Удалить квиз'),
                 BotCommand(command='change_quiz', description='Изменить квиз'),
-                BotCommand(command='user', description='Режим юзера'),
+                # BotCommand(command='user', description='Режим юзера'),
                 BotCommand(command='cancel', description='Отмена действия')
             ]
 
@@ -39,7 +105,7 @@ def commands_change_quiz():
                 BotCommand(command='all_info', description='Информация о квизе'),
                 BotCommand(command='add_question', description='Добавить вопрос'), 
                 BotCommand(command='del_question', description='Удалить вопрос'),
-                BotCommand(command='change_question', description='Изменить вопрос'),
+                # BotCommand(command='change_question', description='Изменить вопрос'),
                 BotCommand(command='change_start_time', description='Изменить время начала квиза')
             ]
     

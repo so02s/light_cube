@@ -21,7 +21,7 @@ router.message.middleware(QuizMiddleware())
 
 @router.message(is_admin, Command("help"))
 async def help_admin(msg: Message):
-    await msg.answer('''========= Команды модератора ========
+    await msg.answer('''= Команды модератора =
 /change_program - изменить сообщение о программе мероприятия. Еще не работает
 /all_quiz - вывести все квизы
 /start_quiz {name} - начать квиз name, без аргумента перекидывает в выбор квиза
@@ -30,7 +30,7 @@ async def help_admin(msg: Message):
 /change_quiz {name} - изменить квиз name, если нет аргумента, то дает выбрать квиз
 /cancel - отмена действия
 ''')
-    await msg.answer('''========= Команды администратора ========
+    await msg.answer('''= Команды администратора =
 /start - стартовое сообщение
 /help - помощь, выводит это сообщение
 /moder - переключиться в режим модератора

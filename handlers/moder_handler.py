@@ -1,8 +1,8 @@
 import re, datetime
 
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, StateFilter, CommandObject
-from aiogram.types import Message, BotCommandScopeChat
+from aiogram.types import Message, BotCommandScopeChat, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from create_bot import bot
@@ -11,26 +11,134 @@ import keyboards.all_keyboards as kb
 from db_handler import db
 from fms.moder_fms import AddQuiz, DelQuiz, ChQuiz, StQuiz
 from handlers.quiz_handler import start_quiz, QuizMiddleware
-from main import scheduler
+from handlers.scheduler_handler import schedule_add_job, schedule_del_job
+
+
+from mqtt.mqtt_handler import wled_publish, blink_cubes, cube_on, cube_off
 
 router = Router()
 router.message.middleware(QuizMiddleware())
 
+# inline changer
+
+async def inline_kb(callback: CallbackQuery, text: str, kb):
+    await callback.message.edit_text(text, reply_markup=kb)
+
+# ============== INLINE CALLBACS =============
+
+
+# -------- Управление кубами ------------
+
+@router.callback_query(F.data == 'cube_management')
+async def cube_handler(callback: CallbackQuery):
+    await inline_kb(
+        callback,
+        "Управление кубами",
+        kb.get_cube_keyboard()
+    )
+
+@router.callback_query(F.data == 'cube_on')
+async def cube_handler(callback: CallbackQuery):
+    await cube_on()
+    
+@router.callback_query(F.data == 'cube_off')
+async def cube_handler(callback: CallbackQuery):
+    await cube_off()
+
+@router.callback_query(F.data == 'cube_presets')
+async def cube_handler(callback: CallbackQuery):
+    await inline_kb(
+        callback,
+        "Пресеты",
+        kb.get_color_blink_keyboard()
+    )
+
+@router.callback_query(F.data.startswith('color_'))
+async def cubes_color(callback: CallbackQuery):
+    color = F.data.split('_')[1]
+    await wled_publish('cubes', color)
+
+@router.callback_query(F.data == 'blink_on')
+async def cubes_color(callback: CallbackQuery):
+    await blink_cubes()
+
+@router.callback_query(F.data == 'blink_off')
+async def cubes_color(callback: CallbackQuery):
+    await cube_on()
+    
+
+
+# -------- Управление квизом ------------
+
+@router.callback_query(F.data == 'quiz_management')
+async def quiz_handler(callback: CallbackQuery):
+    await callback.message.answer("quiz")
+    print("quiz")
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+
+
+
+
+
+
+
 # ------ Помощь
 
-@router.message(is_moder, Command("help"))
+@router.message(is_moder,
+                StateFilter(None), 
+                Command("help"))
 async def help_moder(msg: Message):
     await msg.answer('''
-/start - стартовое сообщение
-/help - помощь, выводит это сообщение
-/change_program - изменить сообщение о программе мероприятия. Еще не работает
-/all_quiz - вывести все квизы
-/start_quiz {name} - начать квиз name, без аргумента перекидывает в выбор квиза
-/add_quiz {name} - добавить квиз name с началом в time, без аргумента спрашивает и про название, и про время
-/del_quiz {name} - удаляет квиз name (с подтверждением), если нет аргумента, то дает выбрать квиз для удаления
-/change_quiz {name} - изменить квиз name, если нет аргумента, то дает выбрать квиз
-/user - переключиться в режим юзера (тебе приходят вопросы с квиза)
-/cancel - отмена действия
+# /start - стартовое сообщение
+# /help - помощь, выводит это сообщение
+# /change_program - изменить сообщение о программе мероприятия. Еще не работает
+# /all_quiz - вывести все квизы
+# /start_quiz - начать квиз
+# /add_quiz - добавить квиз
+# /del_quiz - удаляет квиз
+# /change_quiz - изменить квиз
+# /cancel - отмена действия
 ''')
 
 # ------ Отмена действий
@@ -140,15 +248,6 @@ async def cmd_start(msg: Message, state: FSMContext, command: CommandObject):
     if args:
         quiz_name = args.split(' ')[0]
         await db.add_quiz(quiz_name)
-        # Для добавления таски нужен apscheduler-di
-        # quiz = await db.get_quiz(quiz_name)
-        # scheduler.add_job(
-        #     start_quiz,
-        #     'date',
-        #     run_date=quiz.start_datetime,
-        #     args=[quiz],
-        #     id=f"{quiz.id}"
-        # )
         await msg.answer(f'Добавлен квиз {quiz_name}')
         return
     
@@ -160,15 +259,6 @@ async def cmd_start(msg: Message, state: FSMContext, command: CommandObject):
 async def moder_chosen(msg: Message, state: FSMContext):
     try:
         await db.add_quiz(msg.text)
-        # Для добавления таски нужен apscheduler-di
-        # quiz = await db.get_quiz(msg.text)
-        # scheduler.add_job(
-        #     start_quiz,
-        #     'date',
-        #     run_date=quiz.start_datetime,
-        #     args=[quiz],
-        #     id=f"{quiz.id}"
-        # )
         await msg.answer(f'Добавлен квиз {msg.text}')
         await state.clear()
     except Exception as e:
@@ -228,12 +318,11 @@ async def delquiz_chosen(msg: Message, state: FSMContext):
 @router.message(DelQuiz.confirm)
 async def confirm_delquiz(msg: Message, state: FSMContext):
     if(msg.text.lower() == 'да'):
-        data = await state.get_data()
+        quiz = (await state.get_data())["chosen"]
         try:
-            await db.del_quiz(data["chosen"])
-            # job_name = data['chosen'].id
-            # scheduler.remove_job(job_name)
-            await msg.answer(f'Квиз {data["chosen"].name} удален')
+            await db.del_quiz(quiz)
+            await schedule_del_job(quiz.id)
+            await msg.answer(f'Квиз {quiz.name} удален')
         except Exception as e:
             await msg.answer(f'Произошла ошибка: {e}, попробуйте снова с самого начала')
         finally:
@@ -299,3 +388,6 @@ async def ch_quiz(msg: Message, state: FSMContext):
         await msg.answer(f'Ошибка: {e}')
         
 # TODO вывод результатов квиза
+
+
+'''

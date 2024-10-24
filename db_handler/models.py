@@ -21,7 +21,7 @@ class Quiz(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str]
-    start_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    start_datetime: Mapped[datetime] = mapped_column(DateTime(), nullable=True, default=None)
 
 class Question(Base):
     __tablename__ = 'questions'

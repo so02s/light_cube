@@ -19,3 +19,8 @@ async def cube_off():
 async def cube_publish_by_id(id, msg):
     async with aiomqtt.Client(config('MQTT_HOST')) as client:
         await client.publish("wled/cube_" + str(id), payload=msg)
+        
+
+async def blink_cubes():
+    # TODO анимация медленного мигания на разных кубах (несколько рандомных групп)
+    pass

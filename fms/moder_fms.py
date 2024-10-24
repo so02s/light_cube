@@ -19,7 +19,10 @@ class ChQuiz(StatesGroup):
     del_q_confirm = State()
     ch_time = State()
     ch_q = State()
+    ch_q_action = State()
+    ch_q_time = State()
     ch_answ = State()
+    ch_answ_action = State()
 
 class StQuiz(StatesGroup):
     ch_name = State()
