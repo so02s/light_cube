@@ -9,16 +9,25 @@ async def wled_publish(topic, msg):
 # Управление кубами
 
 async def cube_on():
-    async with aiomqtt.Client(config('MQTT_HOST')) as client:
-        await client.publish("wled/cubes", payload='ON')
+    try:
+        async with aiomqtt.Client(config('MQTT_HOST')) as client:
+            await client.publish("wled/cubes", payload='ON')
+    except:
+        print("Error: MQTT is not connected")
 
 async def cube_off():
-    async with aiomqtt.Client(config('MQTT_HOST')) as client:
-        await client.publish("wled/cubes", payload='OFF')
+    try:
+        async with aiomqtt.Client(config('MQTT_HOST')) as client:
+            await client.publish("wled/cubes", payload='OFF')
+    except:
+        print("Error: MQTT is not connected")
 
 async def cube_publish_by_id(id, msg):
-    async with aiomqtt.Client(config('MQTT_HOST')) as client:
-        await client.publish("wled/cube_" + str(id), payload=msg)
+    try:
+        async with aiomqtt.Client(config('MQTT_HOST')) as client:
+            await client.publish("wled/cube_" + str(id), payload=msg)
+    except:
+        print("Error: MQTT is not connected")
         
 
 async def blink_cubes():
