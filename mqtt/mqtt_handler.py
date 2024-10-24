@@ -2,35 +2,35 @@ import aiomqtt
 from decouple import config
 
 async def wled_publish(topic, msg):
-    try:
+    # try:
         async with aiomqtt.Client(config('MQTT_HOST')) as client:
             await client.publish("wled/" + topic, payload=msg)
-    except:
-        print("Error: MQTT is not connected")
+    # except:
+    #     print("Error: MQTT is not connected")
 
 
 # Управление кубами
 
 async def cube_on():
-    try:
+    # try:
         async with aiomqtt.Client(config('MQTT_HOST')) as client:
             await client.publish("wled/cubes", payload='ON')
-    except:
-        print("Error: MQTT is not connected")
+    # except:
+    #     print("Error: MQTT is not connected")
 
 async def cube_off():
-    try:
+    # try:
         async with aiomqtt.Client(config('MQTT_HOST')) as client:
             await client.publish("wled/cubes", payload='OFF')
-    except:
-        print("Error: MQTT is not connected")
+    # except:
+    #     print("Error: MQTT is not connected")
 
 async def cube_publish_by_id(id, msg):
-    try:
+    # try:
         async with aiomqtt.Client(config('MQTT_HOST')) as client:
             await client.publish("wled/cube_" + str(id), payload=msg)
-    except:
-        print("Error: MQTT is not connected")
+    # except:
+    #     print("Error: MQTT is not connected")
         
 
 async def blink_cubes():

@@ -46,8 +46,9 @@ async def cube_handler(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('color_'))
 async def cubes_color(callback: CallbackQuery):
-    color = F.data.split('_')[1]
-    await wled_publish('cubes', color)
+    color = callback.data.split('_')[1]
+    print(color)
+    await wled_publish('cubes/col', color)
 
 @router.callback_query(F.data == 'blink_on')
 async def cubes_color(callback: CallbackQuery):
