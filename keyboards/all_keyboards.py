@@ -3,16 +3,20 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import Optional
 from aiogram.filters.callback_data import CallbackData
 from db_handler import db
+from keyboards.callback_handler import QuizCallbackFactory
 
-def get_management_keyboard():
+def get_no_buttons():
+    return InlineKeyboardMarkup()
+
+def get_management_kb():
     buttons = [
         [   InlineKeyboardButton(text="Управление кубами", callback_data="cube_management")],
-        [   InlineKeyboardButton(text="Управление квизом", callback_data="quiz_management")]
+        [   InlineKeyboardButton(text="Квизы и мероприятие", callback_data="quiz_management")]
     ]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
 
-def get_cube_keyboard():
+def get_cube_kb():
     buttons = [
         [   InlineKeyboardButton(text="Назад", callback_data="moder_panel")],
         [
@@ -21,72 +25,96 @@ def get_cube_keyboard():
         ],
         [   InlineKeyboardButton(text="Пресеты", callback_data="cube_presets")]
     ]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
 
-def get_color_blink_keyboard():
+def get_color_blink_kb():
     buttons = [
         [   InlineKeyboardButton(text="Назад", callback_data="cube_management")],
         [
-            InlineKeyboardButton(text="Вкл мигание", callback_data="blink_on"),
+            InlineKeyboardButton(text="Красный", callback_data="color_#FF0000"),
+            InlineKeyboardButton(text="Синий", callback_data="color_#0000CD"),
+        ],
+        [
+            InlineKeyboardButton(text="Медленное мигание", callback_data="blink"),
+            InlineKeyboardButton(text="Быстрое мигание", callback_data="fast_blink"),
             InlineKeyboardButton(text="Выкл мигание", callback_data="blink_off")
         ],
         [
-            InlineKeyboardButton(text="Красный", callback_data="color_#FF0000"),
-            InlineKeyboardButton(text="Синий", callback_data="color_#0000CD"),
-            InlineKeyboardButton(text="Желтый", callback_data="color_#FFFF00")
-        ],
-        [
-            InlineKeyboardButton(text="Оранжевый", callback_data="color_#FF4500"),
-            InlineKeyboardButton(text="Зеленый", callback_data="color_#00FF00"),
-            InlineKeyboardButton(text="Фиолетовый", callback_data="color_#800080")
-        ],
-        [
-            InlineKeyboardButton(text="Голубой", callback_data="color_#20B2AA"),
-            InlineKeyboardButton(text="Розовый", callback_data="color_#FF00FF"),
-            InlineKeyboardButton(text="Песочный", callback_data="color_#F0E68C")
-        ],
-        [
-            InlineKeyboardButton(text="Черный", callback_data="color_#000000"),
-            InlineKeyboardButton(text="Белый", callback_data="color_#FFFFFF")
+            InlineKeyboardButton(text="Все", callback_data="one_color"),
+            InlineKeyboardButton(text="Половина", callback_data="two_color"),
+            InlineKeyboardButton(text="Рандомная половина", callback_data="two_color_random")
         ]
     ]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
 
-def get_quiz_keyboard():
+def get_quiz_kb():
     buttons = [
         [   InlineKeyboardButton(text="Назад", callback_data="moder_panel")],
         [   InlineKeyboardButton(text="Начать квиз", callback_data="start_quiz")],
-        [   InlineKeyboardButton(text="Изменить программу", callback_data="change_program")],
+        [   InlineKeyboardButton(text="Программа", callback_data="event_program")],
         [
             InlineKeyboardButton(text="Добавить квиз", callback_data="add_quiz"),
             InlineKeyboardButton(text="Изменить квиз", callback_data="edit_quiz")
         ],
         [   InlineKeyboardButton(text="Удалить квиз", callback_data="delete_quiz")]
     ]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
 
-async def get_all_quizs_keyboard(action: str):
+async def get_all_quizs_kb(action: str):
+    builder = InlineKeyboardBuilder()
+    
     try:
         quizs = await db.get_quizs()
     except:
-        return get_quiz_keyboard()
-
-    buttons = []
+        return get_quiz_kb()
+    
     if not quizs:
-        buttons.append([InlineKeyboardButton(text='Нет квизов', callback_data='no_data')])
+        builder.button(text='Нет квизов', callback_data='no_data')
     else:
         for quiz in quizs:
-            buttons.append([InlineKeyboardButton(text=quiz.name, callback_data=f"quiz_{quiz.id}")])
+            builder.button(
+                text=quiz.name,
+                callback_data=QuizCallbackFactory(quiz_id=quiz.id, action=action)
+            )
+    builder.button(text="Назад", callback_data="quiz_management")
+    builder.adjust(1)
 
-    buttons.append([InlineKeyboardButton(text="Назад", callback_data="quiz_management")])
+    return builder.as_markup()
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
+def get_edit_quiz_kb():
+    buttons = [
+        [InlineKeyboardButton(text="Изменить время начала", callback_data="change_start_time")],
+        [InlineKeyboardButton(text="Изменить вопрос", callback_data="change_question")],
+        [InlineKeyboardButton(text="Добавить вопрос", callback_data="add_question")],
+        [InlineKeyboardButton(text="Удалить вопрос", callback_data="delete_question")],
+        [InlineKeyboardButton(text="Назад", callback_data="quiz_management")]
+    ]
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
 
+def get_confirm_delete_kb(quiz_id: int):
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Да", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action='confirm delete'))
+    builder.button(text="Назад", callback_data="quiz_management")
+    builder.adjust(1)
+    return builder.as_markup()
 
+def get_delete_done_kb():
+    buttons = [[InlineKeyboardButton(text="Хорошо", callback_data='quiz_management')]]
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
+
+# TODO хэндлер для удаления этого сообщения и возврета на quiz_manadger
+def get_event_program_kb():
+    buttons = [
+        [InlineKeyboardButton(text="Изменить программу", callback_data="edit_program")],
+        [InlineKeyboardButton(text="Назад", callback_data="back_from_event_program")], 
+    ]
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
 
 
 
@@ -107,21 +135,6 @@ def commands_admin():
                 BotCommand(command='all_moder', description='Все модераторы'),
                 BotCommand(command='add_moder', description='Добавить модератора'),
                 BotCommand(command='del_moder', description='Удалить модератора'),
-                BotCommand(command='cancel', description='Отмена действия')
-            ]
-
-
-def commands_moder():
-    return [
-                BotCommand(command='start', description='Старт'), 
-                BotCommand(command='help', description='Помощь'),
-                BotCommand(command='change_program', description='Изменить сообщение о программе мероприятия. Еще не работает'),
-                BotCommand(command='all_quiz', description='Вывести все квизы'),
-                BotCommand(command='start_quiz', description='Начать квиз'),
-                BotCommand(command='add_quiz', description='Добавить квиз'),
-                BotCommand(command='del_quiz', description='Удалить квиз'),
-                BotCommand(command='change_quiz', description='Изменить квиз'),
-                # BotCommand(command='user', description='Режим юзера'),
                 BotCommand(command='cancel', description='Отмена действия')
             ]
 
@@ -156,6 +169,3 @@ def commands_change_answer():
                 BotCommand(command='change_text', description='Изменить текст ответа'),
                 BotCommand(command='change_color', description='Изменить цвет ответа')
             ]
-
-def commands_user():
-    return [BotCommand(command='start', description='Старт')]

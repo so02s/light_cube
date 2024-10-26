@@ -1,17 +1,49 @@
 import re, datetime
 
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, StateFilter, CommandObject
-from aiogram.types import Message, BotCommandScopeChat
+from aiogram.types import Message, BotCommandScopeChat, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from create_bot import bot
 import keyboards.all_keyboards as kb
+from keyboards.callback_handler import inline_kb
 from db_handler import db
 from fms.moder_fms import ChQuiz
 from handlers.scheduler_handler import schedule_update_job
+from keyboards.callback_handler import QuizCallbackFactory
 
 router = Router()
+
+@router.callback_query(QuizCallbackFactory.filter(F.action == 'edit'))
+async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallbackFactory):
+    quiz_id = callback_data.quiz_id
+    quiz = await db.get_quiz_by_id(quiz_id)
+    time = quiz.start_datetime.strftime('%d.%m.%Y в %H:%M')
+    time = '----' if time.startswith('01.01.2026') else time
+    questions = await db.get_questions(quiz)
+    if not questions:
+        text = 'Нет вопросов'
+    else:
+        quest = '\n'.join([f'{i+1}. {q.text}' for i, q in enumerate(questions)])
+        text = 'Вопросы:\n' + quest
+    await inline_kb(
+        callback,
+        f'Квиз {quiz.name}\nВремя начала: {time}\n\n{text}',
+        kb.get_edit_quiz_kb()
+    )
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ----- вывод ошибки
 async def errors_msg(e: Exception, msg: Message, state: FSMContext):

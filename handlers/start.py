@@ -15,9 +15,10 @@ router = Router()
 router.message.middleware(QuizMiddleware())
 
 async def view_event_program(msg: Message):
-    photo = FSInputFile("img/event_program.jpg") # TODO Необходимо точное расширение
+    photo = FSInputFile("img/event_program.jpg")
     await bot.send_photo(chat_id=msg.chat.id, photo=photo)
 
+# TODO Объяснение использования
 async def user_register(msg: Message, cube_id: int):
     try:
         connected_at = datetime.datetime.now()
@@ -47,15 +48,9 @@ async def cmd_start(msg: Message, command: CommandObject):
     else:
         await msg.answer("Куб уже занят другим пользователем.")
 
-# Старт для админа
-# TODO добавить удаление из проверки ответов квиза
-@router.message(is_admin, Command("start"))
-async def cmd_start_adm(msg: Message):
-    await bot.set_my_commands(kb.commands_admin(), BotCommandScopeChat(chat_id=msg.from_user.id))
-    await msg.answer('Привет админ! Открой меню для взаимодействия с ботом. Там есть все команды')
-
 # Старт для модератора
 # TODO добавить удаление из проверки ответов квиза
 @router.message(is_moder, Command("start"))
 async def cmd_start_mod(msg: Message):
-    await msg.answer("Привет, модератор!\n\nВыберите действие", reply_markup=kb.get_management_keyboard())
+    msg_bot = await msg.answer("Привет, модератор!\n\nВыберите действие", reply_markup=kb.get_management_kb())
+    await bot.delete_messages(msg.from_user.id, [msg_bot.message_id - i for i in range(2, 100)])

@@ -65,7 +65,6 @@ async def cmd_start(msg: Message):
     await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
 
 # ---- Режим юзера
-# TODO - добавление в список с юзерами кубов
 @router.message(is_admin, StateFilter(None), Command("user"))
 async def cmd_start(msg: Message):
     await bot.set_my_commands(kb.commands_user(), BotCommandScopeChat(chat_id=msg.from_user.id))

@@ -36,6 +36,12 @@ async def get_quiz(name: str) -> Quiz:
                                          .where(Quiz.name == name))
         return quiz_obj.first()
 
+async def get_quiz_by_id(quiz_id: int) -> Quiz:
+    async with Session() as session:
+        quiz_obj = await session.scalars(select(Quiz)
+                                         .where(Quiz.id == quiz_id))
+        return quiz_obj.first()
+
 async def add_quiz(name: str, time: str = '01.01.2026 00:00') -> None:
     start_datetime = datetime.datetime.strptime(time, '%d.%m.%Y %H:%M')
     async with Session() as session, session.begin():
@@ -45,6 +51,12 @@ async def add_quiz(name: str, time: str = '01.01.2026 00:00') -> None:
 
 async def del_quiz(quiz_obj: Quiz) -> None:
     async with Session() as session, session.begin():
+        await session.delete(quiz_obj)
+        
+async def del_quiz_by_id(quiz_id: int) -> None:
+    async with Session() as session, session.begin():
+        quiz_obj = (await session.scalars(select(Quiz)
+                                         .where(Quiz.id == quiz_id))).first()
         await session.delete(quiz_obj)
 
 async def add_question(time: str, question: str, quiz_obj: Quiz) -> Question:

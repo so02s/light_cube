@@ -53,7 +53,6 @@ async def cancel_chosen(msg: Message, state: FSMContext):
     await state.clear()
 
 # -------- Режим юзера
-# TODO - добавление в список с юзерами кубов
 @router.message(is_moder, Command("user"))
 async def cmd_start(msg: Message, state: FSMContext):
     await bot.set_my_commands(kb.commands_user(), BotCommandScopeChat(chat_id=msg.from_user.id))
@@ -61,7 +60,6 @@ async def cmd_start(msg: Message, state: FSMContext):
     await state.clear()
 
 # -------- Изменить сообщение о программе мероприятия
-# TODO еще добавление файла/картинки/каким-то образом копирование сообщения от пользователя и его сохранение
 @router.message(is_admin_or_moder, StateFilter(None), Command("change_program"))
 async def cmd_start(msg: Message):
     await msg.answer('Функция еще не добавлена')
@@ -284,4 +282,3 @@ async def ch_quiz(msg: Message, state: FSMContext):
     except Exception as e:
         await msg.answer(f'Ошибка: {e}')
         
-# TODO вывод результатов квиза
