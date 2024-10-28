@@ -35,6 +35,11 @@ class DelModer(StatesGroup):
 
 @router.message(
     is_admin,
+    StateFilter(
+        DelModer.ch_name,
+        DelModer.confirm,
+        None
+    ),
     Command("cancel")
 )
 async def edit_answer_repl(

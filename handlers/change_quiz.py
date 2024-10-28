@@ -98,7 +98,7 @@ async def add_quiz(msg: Message, state: FSMContext):
     
     quiz_id = (await state.get_data())['quiz_id']
     await db.set_quiz_time(time, quiz_id)
-    # TODO scheruewefwe добавление/обновление джоба
+    await schedule_update_job(quiz_id)
     await edit_quiz(msg, state)
 
 # -------- Добавление вопроса

@@ -3,7 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import Optional
 from aiogram.filters.callback_data import CallbackData
 from db_handler import db
-from keyboards.callback_handler import QuizCallbackFactory, QuestionCallbackFactory, AnswerCallbackFactory
+from keyboards.callback_handler import QuizCallbackFactory, QuestionCallbackFactory, AnswerCallbackFactory, UserCallbackFactory
 
 hex_to_color = {
     '#FF0000': 'красный',
@@ -204,23 +204,10 @@ def get_answer_color_kb(answer_id: int):
     builder.button(text="Назад", callback_data=AnswerCallbackFactory(answer_id=answer_id, action="edit"))
     return builder.as_markup()
 
-# def commands_admin():
-#     return [
-#                 BotCommand(command='start', description='Старт'),
-#                 BotCommand(command='help', description='Помощь'),
-#                 BotCommand(command='moder', description='Режим модератора'),
-#                 BotCommand(command='user', description='Режим юзера'),
-#                 BotCommand(command='on', description='Включить свет'),
-#                 BotCommand(command='off', description='Выключить свет'),
-#                 BotCommand(command='color', description='Установка цвета'),
-#                 BotCommand(command='random', description='Поменять на рандомный цвет'),
-#                 BotCommand(command='deep_link', description='Создать реферальную ссылку для кубов'),
-#                 BotCommand(command='deep_link_program', description='Создать реферальную ссылку для программы мероприятия'),
-#                 BotCommand(command='all_moder', description='Все модераторы'),
-#                 BotCommand(command='add_moder', description='Добавить модератора'),
-#                 BotCommand(command='del_moder', description='Удалить модератора'),
-#                 BotCommand(command='cancel', description='Отмена действия')
-#             ]
+def reply_answers(answers: list):
+    builder = InlineKeyboardBuilder()
+    for answer in answers:
+        builder.button(text=answer.text, callback_data=UserCallbackFactory(answer_id=answer.id))
 
 def commands_moder():
     return [BotCommand(command='start', description='Старт')]

@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InputMediaPhoto, Message
+from aiogram.types import CallbackQuery, InputMediaPhoto, Message, ContentType
 from handlers.quiz_handler import QuizMiddleware
 from mqtt.mqtt_handler import wled_publish, blink_cubes, cube_on, cube_off
 from keyboards.callback_handler import inline_kb
@@ -65,7 +65,7 @@ async def quiz_handler(callback: CallbackQuery):
 # ------- Программа мероприятия
 
 @router.callback_query(F.data == 'event_program')
-async def quiz_handler(callback: CallbackQuery):
+async def event_prog(callback: CallbackQuery):
     photo = FSInputFile("img/event_program.jpg")
     await callback.message.answer_photo(photo, reply_markup=kb.get_event_program_kb())
     await callback.message.delete()
@@ -77,12 +77,12 @@ async def quiz_handler(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'edit_program')
 async def quiz_handler(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("Пожалуйста, отправьте фото для программы мероприятия.")
-    await Form.waiting_for_photo.set()
+    await callback.message.answer("Пожалуйста, отправьте фото для программы мероприятия.\n\nОтмена на /cancel")
+    await state.set_state(Form.waiting_for_photo)
     await callback.message.delete()
 
-@router.message(State=Form.waiting_for_photo, content_types=types.ContentType.PHOTO)
-async def handle_photo(message: types.Message, state: FSMContext):
+@router.message(StateFilter(Form.waiting_for_photo), F.content_type == ContentType.PHOTO)
+async def handle_photo(message: Message, state: FSMContext):
     photo = message.photo[-1]
     file_id = photo.file_id
     file = await message.bot.get_file(file_id)
@@ -90,12 +90,16 @@ async def handle_photo(message: types.Message, state: FSMContext):
     file_path = f"img/event_program.jpg"
     await message.bot.download_file(file.file_path, file_path)
 
-    await message.answer("Фото успешно загружено!")
-    await state.finish()
+    await state.clear()
+    
+    photo = FSInputFile("img/event_program.jpg")
+    await message.answer_photo(photo, reply_markup=kb.get_event_program_kb())
+    await bot.delete_messages(message.from_user.id, [message.message_id - i for i in range(2)])
 
-@router.message(State=Form.waiting_for_photo)
-async def invalid_photo_handler(message: types.Message):
-    await message.answer("Пожалуйста, отправьте фото.")
+@router.message(StateFilter(Form.waiting_for_photo))
+async def invalid_photo_handler(msg: Message):
+    await bot.delete_messages(msg.from_user.id, [msg.message_id - i for i in range(2)])
+    await msg.answer("Пожалуйста, отправьте фото.\n\nОтмена на /cancel")
     
 # ------- Добавление
 

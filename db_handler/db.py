@@ -247,16 +247,29 @@ async def get_cubes():
         cubes_list = await session.execute(select(Cube))
         return cubes_list.scalars().all()
         
-async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808080') -> None:
+async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808080') -> bool:
     async with Session() as session, session.begin():
-        cube_obj = Cube(
-            id=cube_id,
-            username=username,
-            user_id=user_id,
-            connected_at=connected_at,
-            status=color
-        )
-        session.add(cube_obj)
+        stmt = select(Cube).where(Cube.user_id == user_id, Cube.id == cube_id)
+        result = await session.execute(stmt)
+        existing_cube = result.scalars().first()
+
+        if existing_cube:
+            time_difference = connected_at - existing_cube.connected_at
+            if time_difference.total_seconds() <= 15 * 60:
+                return False
+            existing_cube.username = username
+            existing_cube.connected_at = connected_at
+            existing_cube.status = color
+        else:
+            cube_obj = Cube(
+                id=cube_id,
+                username=username,
+                user_id=user_id,
+                connected_at=connected_at,
+                status=color
+            )
+            session.add(cube_obj)
+        return True
 
 async def add_user_answ(cube_id, question_obj: Question, answer_obj: Answer) -> None:
     async with Session() as session, session.begin():

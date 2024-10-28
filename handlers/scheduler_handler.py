@@ -35,8 +35,8 @@ async def schedule_del_job(quiz_id: int):
     if job:
         scheduler.remove_job(job_id)
 
-async def schedule_update_job(quiz: Quiz):
-    job_id = f"quiz_{quiz.id}"
+async def schedule_update_job(quiz_id: int):
+    job_id = f"quiz_{quiz_id}"
     job = scheduler.get_job(job_id)
     if job:
         await schedule_del_job(job_id)

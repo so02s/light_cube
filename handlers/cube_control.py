@@ -51,19 +51,18 @@ async def cubes_color(callback: CallbackQuery):
     print(color)
     await wled_publish('cubes/col', color)
 
-
-# TODO
 @router.callback_query(F.data == 'blink')
-async def cubes_color(callback: CallbackQuery):
-    await blink_cubes()
+async def cubes_blink(callback: CallbackQuery):
+    await blink_cubes(speed=1000)
 
 @router.callback_query(F.data == 'fast_blink')
-async def cubes_color(callback: CallbackQuery):
-    await blink_cubes()
+async def cubes_fast_blink(callback: CallbackQuery):
+    await blink_cubes(speed=500)
 
 @router.callback_query(F.data == 'blink_off')
-async def cubes_color(callback: CallbackQuery):
-    await cube_on()
+async def cubes_blink_off(callback: CallbackQuery):
+    global is_blinking
+    is_blinking = False
 
 # ----- Разделение кубов по цвету
 

@@ -16,5 +16,8 @@ class AnswerCallbackFactory(CallbackData, prefix="fabanswer"):
     action: str
     color: Optional[str] = None
 
+class UserCallbackFactory(CallbackData, prefix="fabanswer"):
+    answer_id: int
+
 async def inline_kb(callback: CallbackQuery, text: str, reply_markup):
     await callback.message.edit_text(text, reply_markup=reply_markup)
