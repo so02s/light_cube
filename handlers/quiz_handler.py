@@ -7,7 +7,7 @@ from aiogram.filters import StateFilter, Command
 from create_bot import bot
 import asyncio
 import mqtt.mqtt_handler as mqtt
-from utils.filter import is_admin_or_moder, is_quiz_user
+from utils.filter import is_moder, is_quiz_user
 
 quiz_active = False
 current_question = None
@@ -32,7 +32,7 @@ router = Router()
 router.message.middleware(QuizMiddlewareAnsware())
 
 # TODO как остановить квиз
-@router.message(is_admin_or_moder, StateFilter(None), Command("stop_quiz"))
+@router.message(is_moder, StateFilter(None), Command("stop_quiz"))
 async def handle_stop(message: Message):
     pass
 

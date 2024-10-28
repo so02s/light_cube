@@ -15,9 +15,8 @@ async def cube_handler(callback: CallbackQuery):
     await inline_kb(
         callback,
         "Выберете действие",
-        kb.get_management_kb()
+        reply_markup=kb.get_management_kb()
     )
-
 
 # -------- Управление кубами ------------
 
@@ -26,7 +25,7 @@ async def cube_handler(callback: CallbackQuery):
     await inline_kb(
         callback,
         "Управление кубами",
-        kb.get_cube_kb()
+        reply_markup=kb.get_cube_kb()
     )
 
 @router.callback_query(F.data == 'cube_on')
@@ -42,14 +41,16 @@ async def cube_handler(callback: CallbackQuery):
     await inline_kb(
         callback,
         "Пресеты",
-        kb.get_color_blink_kb()
+        reply_markup=kb.get_color_blink_kb()
     )
+
 
 @router.callback_query(F.data.startswith('color_'))
 async def cubes_color(callback: CallbackQuery):
     color = callback.data.split('_')[1]
     print(color)
     await wled_publish('cubes/col', color)
+
 
 # TODO
 @router.callback_query(F.data == 'blink')
@@ -64,11 +65,12 @@ async def cubes_color(callback: CallbackQuery):
 async def cubes_color(callback: CallbackQuery):
     await cube_on()
 
+# ----- Разделение кубов по цвету
+
 @router.callback_query(F.data == 'one_color')
 async def cubes_color(callback: CallbackQuery):
     for _ in range(1, 121):
         await wled_publish(f'cube_{i}/col', '#FF0000')
-    # await cube_on()
 
 @router.callback_query(F.data == 'two_color')
 async def cubes_color(callback: CallbackQuery):
@@ -76,7 +78,6 @@ async def cubes_color(callback: CallbackQuery):
         await wled_publish(f'cube_{i}/col', '#FF0000')
     for i in range(61, 121):
         await wled_publish(f'cube_{i}/col', '#0000CD')
-    # await cube_on()
 
 @router.callback_query(F.data == 'two_color_random')
 async def cubes_color(callback: CallbackQuery):
@@ -89,5 +90,3 @@ async def cubes_color(callback: CallbackQuery):
         await wled_publish(f'cube_{i}/col', '#FF0000')
     for i in second_half:
         await wled_publish(f'cube_{i}/col', '#0000CD')
-    
-    # await cube_on()

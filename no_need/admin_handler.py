@@ -88,7 +88,7 @@ async def cmd_start(msg: Message):
 async def cmd_start(msg: Message, command: CommandObject):
     args: str = command.args
     if not args:
-        await msg.answer('Вы забыли добавить имя\n/add_moder /{name/}')
+        await msg.answer('Вы забыли добавить имя\n/add_moder {name}')
         return
     
     moder_name = args.split(' ')[0]

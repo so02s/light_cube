@@ -10,6 +10,7 @@ from keyboards.callback_handler import QuizCallbackFactory
 from db_handler import db
 from handlers.scheduler_handler import schedule_del_job
 from aiogram.filters import Command, StateFilter
+from create_bot import bot
 
 router = Router()
 
@@ -21,16 +22,34 @@ from aiogram.fsm.state import State, StatesGroup
 
 class AddQuiz(StatesGroup):
     ch_name = State()
-    
+class Form(StatesGroup):
+    waiting_for_photo = State()
+
+# -------- Выход из FSM
+
+@router.message(
+    Command("cancel"),
+    StateFilter(
+        AddQuiz.ch_name,
+        Form.waiting_for_photo
+    )
+)
+async def add_quiz(msg: Message, state: FSMContext):
+    await bot.delete_messages(msg.from_user.id, [msg.message_id - i for i in range(2)])
+    await msg.answer(
+        "Управление квизами",
+        reply_markup=kb.get_quiz_kb()
+    )
+    await state.clear()
     
 # -------- Управление квизами ------------
 
 @router.callback_query(F.data == 'quiz_management')
-async def quiz_handler(callback: CallbackQuery):
+async def first_handler(callback: CallbackQuery):
     await inline_kb(
         callback,
         "Управление квизами",
-        kb.get_quiz_kb()
+        reply_markup=kb.get_quiz_kb()
     )
 
 # ------- Запуск квиза
@@ -40,7 +59,7 @@ async def quiz_handler(callback: CallbackQuery):
     await inline_kb(
         callback,
         "Выберите какой квиз вы хотите начать",
-        await kb.get_all_quizs_kb('start')
+        reply_markup= await kb.get_all_quizs_kb('start')
     )
 
 # ------- Программа мероприятия
@@ -51,26 +70,49 @@ async def quiz_handler(callback: CallbackQuery):
     await callback.message.answer_photo(photo, reply_markup=kb.get_event_program_kb())
     await callback.message.delete()
 
-# ------- Добавление
+@router.callback_query(F.data == 'back_from_event_program')
+async def quiz_handler(callback: CallbackQuery):
+    await callback.message.answer("Управление квизами", reply_markup=kb.get_quiz_kb())
+    await callback.message.delete()
 
-@router.message(Command("cancel"), StateFilter(AddQuiz.ch_name))
-async def add_quiz(msg: Message, state: FSMContext):
-    # TODO удалить прошлые два сообщения
-    # await bot.delete_message(msg.from_user.chat_id, msg.message_id - 1)
-    await msg.answer("Управление квизами", reply_markup=kb.get_quiz_kb())
-    await state.clear()
+@router.callback_query(F.data == 'edit_program')
+async def quiz_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("Пожалуйста, отправьте фото для программы мероприятия.")
+    await Form.waiting_for_photo.set()
+    await callback.message.delete()
+
+@router.message(State=Form.waiting_for_photo, content_types=types.ContentType.PHOTO)
+async def handle_photo(message: types.Message, state: FSMContext):
+    photo = message.photo[-1]
+    file_id = photo.file_id
+    file = await message.bot.get_file(file_id)
+
+    file_path = f"img/event_program.jpg"
+    await message.bot.download_file(file.file_path, file_path)
+
+    await message.answer("Фото успешно загружено!")
+    await state.finish()
+
+@router.message(State=Form.waiting_for_photo)
+async def invalid_photo_handler(message: types.Message):
+    await message.answer("Пожалуйста, отправьте фото.")
+    
+# ------- Добавление
 
 @router.callback_query(F.data == 'add_quiz')
 async def add_quiz(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer('Введите название квиза.\nОтмена на /cancel') # TODO отмена
+    await callback.message.answer('Введите название квиза.\nОтмена на /cancel')
     await callback.message.delete()
     await state.set_state(AddQuiz.ch_name)
     
 @router.message(AddQuiz.ch_name)
 async def add_quiz(msg: Message, state: FSMContext):
-    await bot.delete_message(msg.from_user.chat_id, msg.message_id - 1)
-    await db.add_quiz(msg.text)
-    await msg.answer(f'Добавлен квиз {msg.text}', reply_markup=kb.get_edit_quiz_kb()) # TODO клава для изменения только что созданного
+    await bot.delete_messages(msg.from_user.id, [msg.message_id - i for i in range(2)])
+    quiz_id = await db.add_quiz(msg.text)
+    await msg.answer(
+        f'Добавлен квиз\n{msg.text}',
+        reply_markup=kb.get_edit_quiz_kb(quiz_id)
+    )
     await state.clear()
 
 # -------- Изменение
@@ -80,7 +122,7 @@ async def quiz_handler(callback: CallbackQuery):
     await inline_kb(
         callback,
         "Выберите какой квиз вы хотите изменить",
-        await kb.get_all_quizs_kb('edit')
+        reply_markup= await kb.get_all_quizs_kb('edit')
     )
 
 # -------- Удаление
@@ -90,7 +132,7 @@ async def quiz_handler(callback: CallbackQuery):
     await inline_kb(
         callback,
         "Выберите какой квиз вы хотите удалить",
-        await kb.get_all_quizs_kb('delete')
+        reply_markup= await kb.get_all_quizs_kb('delete')
     )
 
 @router.callback_query(QuizCallbackFactory.filter(F.action == 'delete'))
@@ -100,7 +142,10 @@ async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallback
     await inline_kb(
         callback,
         f"Вы уверены, что хотите удалить {quiz.name}?",
-        kb.get_confirm_delete_kb(quiz_id)
+        reply_markup=kb.get_confirm_delete_kb(
+            next_step=QuizCallbackFactory(quiz_id=quiz_id, action='confirm delete'),
+            before_step='quiz_management'
+        )
     )
 
 @router.callback_query(QuizCallbackFactory.filter(F.action == 'confirm delete'))
@@ -111,5 +156,5 @@ async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallback
     await inline_kb(
         callback,
         f"Квиз успешно удален",
-        kb.get_delete_done_kb()
+        reply_markup=kb.get_delete_done_kb('quiz_management')
     )
