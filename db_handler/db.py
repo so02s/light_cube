@@ -25,6 +25,27 @@ async def del_moder(name):
 
 # -----модерские
 
+async def top_ten(quiz_id: int):
+    async with Session() as session:
+        query = (
+            select(
+                Cube.username,
+                UserTesting.cube_id,
+                func.count(UserTesting.id).label('correct_count'),
+                func.min(UserTesting.time_add_answer).label('fastest_time')
+            )
+            .join(UserTesting, UserTesting.cube_id == Cube.id)
+            .join(Answer, UserTesting.answer_id == Answer.id)
+            .filter(Answer.is_correct == True, UserTesting.quiz_id == quiz_id)  # Filter by quiz_id
+            .group_by(Cube.username, UserTesting.cube_id)
+            .order_by(desc('correct_count'), 'fastest_time')
+            .limit(10)  
+        )
+        
+        result = await session.execute(query)
+        
+        return result.all()
+
 async def get_quizs():
     async with Session() as session:
         result = await session.scalars(select(Quiz))
@@ -228,6 +249,10 @@ async def get_users_answ(question_obj: Question):
             .where(Testing.question == question_obj)
         )
         return answer_list.scalars().all()
+
+async def shuffle_quest(question_id: int, shuffle_to: int) -> None:
+    pass
+
 
 # юзерские
 

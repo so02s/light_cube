@@ -1,7 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
-from handlers.quiz_handler import QuizMiddleware
-from mqtt.mqtt_handler import wled_publish, blink_cubes, cube_on, cube_off
+from mqtt.mqtt_handler import wled_publish, cube_on, cube_off
 from keyboards.callback_handler import inline_kb
 import keyboards.all_keyboards as kb
 import random
@@ -31,10 +30,12 @@ async def cube_handler(callback: CallbackQuery):
 @router.callback_query(F.data == 'cube_on')
 async def cube_handler(callback: CallbackQuery):
     await cube_on()
+    await callback.answer(show_alert=False)
     
 @router.callback_query(F.data == 'cube_off')
 async def cube_handler(callback: CallbackQuery):
     await cube_off()
+    await callback.answer(show_alert=False)
 
 @router.callback_query(F.data == 'cube_presets')
 async def cube_handler(callback: CallbackQuery):
@@ -51,18 +52,19 @@ async def cubes_color(callback: CallbackQuery):
     print(color)
     await wled_publish('cubes/col', color)
 
+# TODO чекнуть и загрузить пресеты
+# Тут только через пресеты на wled
 @router.callback_query(F.data == 'blink')
 async def cubes_blink(callback: CallbackQuery):
-    await blink_cubes(speed=1000)
+    await wled_publish('cubes/api', 1)
 
 @router.callback_query(F.data == 'fast_blink')
 async def cubes_fast_blink(callback: CallbackQuery):
-    await blink_cubes(speed=500)
+    await wled_publish('cubes/api', 2)
 
 @router.callback_query(F.data == 'blink_off')
 async def cubes_blink_off(callback: CallbackQuery):
-    global is_blinking
-    is_blinking = False
+    await wled_publish('cubes/api', 0)
 
 # ----- Разделение кубов по цвету
 

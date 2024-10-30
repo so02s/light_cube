@@ -156,5 +156,3 @@ async def execute_delete_question_handler(callback: CallbackQuery, callback_data
             QuizCallbackFactory(quiz_id=question.quiz_id, action='edit')
         )
     )
-
-# TODO перенос вопроса на какое-то место

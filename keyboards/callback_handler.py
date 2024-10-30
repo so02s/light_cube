@@ -10,6 +10,7 @@ class QuizCallbackFactory(CallbackData, prefix="fabquiz"):
 class QuestionCallbackFactory(CallbackData, prefix="fabquestion"):
     question_id: int
     action: str
+    question_shuffle: Optional[int] = None
 
 class AnswerCallbackFactory(CallbackData, prefix="fabanswer"):
     answer_id: int

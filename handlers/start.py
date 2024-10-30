@@ -1,20 +1,18 @@
+import datetime
+
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.types import Message, BotCommandScopeChat
 from aiogram.types.input_file import FSInputFile
 from aiogram.utils.deep_linking import decode_payload
-import datetime
 from aiogram.fsm.context import FSMContext
-from utils.filter import is_admin, is_moder
-import keyboards.all_keyboards as kb
+
 from create_bot import bot
 from db_handler import db
-from handlers.quiz_handler import QuizMiddleware
+from utils.filter import is_moder
+import keyboards.all_keyboards as kb
 
 router = Router()
-# router.message.middleware(QuizMiddleware())
-
-photo = FSInputFile("img/event_program.jpg")
 
 # Старт для QR
 @router.message(CommandStart(deep_link=True))

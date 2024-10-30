@@ -32,15 +32,3 @@ async def cube_publish_by_id(id, msg):
             await client.publish("wled/cube_" + str(id), payload=msg)
     except:
         print("Error: MQTT is not connected")
-
-async def blink_cubes(speed: int, count: int = 121):
-    global is_blinking
-    is_blinking = True
-    while is_blinking:
-        for cube_id in range(1, count):
-            await cube_publish_by_id(cube_id, 'ON')
-        await asyncio.sleep(speed / 1000)
-        
-        for cube_id in range(1, count):
-            await cube_publish_by_id(cube_id, 'OFF')
-        await asyncio.sleep(speed / 1000)
