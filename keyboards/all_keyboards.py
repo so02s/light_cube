@@ -66,11 +66,17 @@ def get_quiz_kb():
             InlineKeyboardButton(text="Добавить квиз", callback_data="add_quiz"),
             InlineKeyboardButton(text="Изменить квиз", callback_data="edit_quiz")
         ],
-        # TODO наверное не через одну кнопку это делать
-        [   InlineKeyboardButton(text="Начать/остановить квиз", callback_data="start_quiz")],
+        [   InlineKeyboardButton(text="Начать квиз", callback_data="start_quiz")],
         [   InlineKeyboardButton(text="Вывести результат последнего квиза", callback_data="result_quiz")],
         [   InlineKeyboardButton(text="Удалить квиз", callback_data="delete_quiz")],
         [   InlineKeyboardButton(text="Назад", callback_data="moder_panel")]
+    ]
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return kb
+
+def get_sterted_quiz_kb():
+    buttons = [
+        [   InlineKeyboardButton(text="Остановить квиз", callback_data="start_quiz")]
     ]
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return kb
@@ -97,22 +103,14 @@ def get_edit_quiz_kb(quiz_id: int):
     builder = InlineKeyboardBuilder()
     builder.button(text="Изменить время начала", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="change_start_time"))
     builder.button(text="Изменить вопрос", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="change_question"))
-    builder.button(text="Поменять порядок вопросов", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="shuffle_question"))
+    # builder.button(text="Поменять порядок вопросов", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="shuffle_question"))
     builder.button(text="Добавить вопрос", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="add_question"))
     builder.button(text="Удалить вопрос", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="delete_question"))
     builder.button(text="Назад", callback_data="quiz_management")
     builder.adjust(1)
     return builder.as_markup()
 
-# def get_edit_new_quiz_kb(quiz_id: int):
-#     builder = InlineKeyboardBuilder()
-#     builder.button(text="Изменить время начала", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="change_start_time"))
-#     builder.button(text="Добавить вопрос", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="add_question"))
-#     builder.button(text="Назад", callback_data="quiz_management")
-#     builder.adjust(1)
-#     return builder.as_markup()
-
-def get_delete_done_kb(callback_data):
+def get_done_kb(callback_data):
     builder = InlineKeyboardBuilder()
     builder.button(text="Хорошо", callback_data=callback_data)
     return builder.as_markup()

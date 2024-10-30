@@ -44,6 +44,7 @@ async def cmd_start(msg: Message, command: CommandObject):
     else:
         await msg.answer("Куб уже занят другим пользователем.")
 
+# TODO во время квиза другие кнопки
 # Старт для модератора
 @router.message(is_moder, Command("start"))
 async def cmd_start_mod(msg: Message, state: FSMContext):

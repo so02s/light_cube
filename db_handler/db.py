@@ -1,6 +1,6 @@
 from create_bot import Session
 from db_handler.models import Moder, Quiz, Question, Answer, Cube, Testing
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func, update, case
 import datetime
 
 # ----админские
@@ -222,6 +222,7 @@ async def get_answers(question_obj: Question):
         answer_list = await session.execute(
             select(Answer)
             .where(Answer.question == question_obj)
+            .order_by(Answer.id)
         )
         return answer_list.scalars().all()
 
@@ -230,6 +231,7 @@ async def get_answers_by_id(question_id: int):
         answer_list = await session.execute(
             select(Answer)
             .where(Answer.question_id == question_id)
+            .order_by(Answer.id)
         )
         return answer_list.scalars().all()
 
@@ -251,10 +253,53 @@ async def get_users_answ(question_obj: Question):
         return answer_list.scalars().all()
 
 async def shuffle_quest(question_id: int, shuffle_to: int) -> None:
-    pass
+    async with Session() as session, session.begin():
+        # Получаем текущий вопрос и его номер
+        result = await session.execute(
+            select(Question)
+            .where(Question.id == question_id)
+        )
+        question = result.scalar_one_or_none()
+
+        if question is None:
+            return
+
+        current_number = question.question_number
+
+        if current_number == shuffle_to:
+            return
+
+        # Перемещаем все вопросы между current_number и shuffle_to
+        if current_number < shuffle_to:
+            # Сдвиг вопросов вниз
+            await session.execute(
+                update(Question)
+                .where(Question.quiz_id == question.quiz_id,
+                        Question.question_number > current_number,
+                        Question.question_number <= shuffle_to)
+                .values(question_number=case(
+                        {Question.question_number: None}, 
+                        else_=Question.question_number - 1
+                    ))
+            )
+        else:
+            # Сдвиг вопросов вверх
+            await session.execute(
+                update(Question)
+                .where(Question.quiz_id == question.quiz_id,
+                        Question.question_number >= shuffle_to,
+                        Question.question_number < current_number)
+                .values(question_number==case(
+                        {Question.question_number: None}, 
+                        else_=Question.question_number + 1
+                    ))
+            )
+
+        # Обновляем номер текущего вопроса
+        question.question_number = shuffle_to
+        session.add(question)  # Добавляем вопрос обратно в сессию для обновления
 
 
-# юзерские
 
 async def is_cube_empty(cube_id) -> bool:
     async with Session() as session:

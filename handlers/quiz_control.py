@@ -46,7 +46,6 @@ async def add_quiz(msg: Message, state: FSMContext):
 
 @router.callback_query(F.data == 'quiz_management')
 async def first_handler(callback: CallbackQuery):
-    await bot.delete_messages(callback.message - i for i in range(100)) # может что-то сломать
     await inline_kb(
         callback,
         "Управление квизами",
@@ -65,7 +64,7 @@ async def result_quiz_callback(callback: CallbackQuery):
         message += f"{i+1}. Пользователь: {username} (Куб ID: {cube_id}) - {correct_count} правильных ответов, {fastest_time} секунд\n"
 
     await callback.message.delete()
-    await callback.message.answer(message, reply_markup=kb.get_delete_done_kb(quiz_management))
+    await callback.message.answer(message, reply_markup=kb.get_done_kb('quiz_management'))
 
 
 # Вся инфа по какому-то квизу
@@ -92,15 +91,14 @@ async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallback
         await inline_kb(
             callback,
             message,
-            reply_markup=kb.get_delete_done_kb('quiz_management')
+            reply_markup=kb.get_done_kb('quiz_management')
         )
         return
     
-    await callback.message.delete()
     await callback.message.answer(message)
     
-    for question in questions:
-        message = f"Вопрос {question.question_number}: {question.text}\n"
+    for i, question in enumerate(questions):
+        message = f"Вопрос {i + 1}: {question.text}\n"
         message += f"Время на вопрос {question.time_limit_seconds} секунд\n"
         
         answers = await db.get_answers(question)
@@ -113,16 +111,28 @@ async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallback
             message += "Нет доступных ответов.\n"
         message += "\n"
         last = await callback.message.answer(message)
-    await last.edit_reply_markup(reply_markup=kb.get_delete_done_kb('quiz_management'))
+        
+    await callback.message.delete()
+    await last.edit_reply_markup(reply_markup=kb.get_done_kb('quiz_management_delete_before'))
 
+@router.callback_query(F.data == 'quiz_management_delete_before')
+async def quiz_handler(callback: CallbackQuery):
+    await callback.message.answer(
+        "Управление квизами",
+        reply_markup=kb.get_quiz_kb()
+    )
+    
+    chat_id = callback.message.chat.id
+    msg_id = callback.message.message_id
+    try:
+        await callback.bot.delete_messages(chat_id, [msg_id - i for i in range(50)])
+    except:
+        pass
 
 # ------- Запуск квиза
 
-# TODO НЕ ЧЕРЕЗ ОДНУ КНОПКУ
-# И кнопки должны как-то меняться почле начала (тип нельзя менять квиз и прочее)
 @router.callback_query(F.data == 'start_quiz')
 async def quiz_handler(callback: CallbackQuery):
-    global quiz_active, quiz_id
     # Остановка квиза
     if quiz_active:
         callback.answer('Квиз остановлен')
@@ -141,7 +151,6 @@ async def quiz_handler(callback: CallbackQuery):
     # Продолжение с последнего момента
     await start_quiz()
 
-# TODO КНОПКИ ДРУГИЕ
 @router.callback_query(QuizCallbackFactory.filter(F.action == 'start'))
 async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallbackFactory):
     quiz_id = callback_data.quiz_id
@@ -247,5 +256,5 @@ async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallback
     await inline_kb(
         callback,
         f"Квиз успешно удален",
-        reply_markup=kb.get_delete_done_kb('quiz_management')
+        reply_markup=kb.get_done_kb('quiz_management')
     )

@@ -152,7 +152,7 @@ async def execute_delete_question_handler(callback: CallbackQuery, callback_data
     await inline_kb(
         callback,
         f"Вопрос успешно удален",
-        reply_markup=kb.get_delete_done_kb(
+        reply_markup=kb.get_done_kb(
             QuizCallbackFactory(quiz_id=question.quiz_id, action='edit')
         )
     )

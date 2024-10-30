@@ -34,7 +34,7 @@ async def edit_answer_repl(
     answer_id = (await state.get_data())['answer_id']
     answer = await db.get_answer_by_id(answer_id)
     text = 'Правильный ответ' if answer.is_correct else 'Неправильный ответ'
-    hex_color = kb.hex_to_color.get(answer.color, 'Неизвестный цвет')
+    hex_color = kb.hex_to_color.get(answer.color, 'серый')
     response_text = (
         f"{answer.text}\n\n"
         f"Цвет: {hex_color}\n"
@@ -69,7 +69,7 @@ async def edit_answer_handler(
     answer_id = callback_data.answer_id
     answer = await db.get_answer_by_id(answer_id)
     text = 'Правильный ответ' if answer.is_correct else 'Неправильный ответ'
-    hex_color = kb.hex_to_color.get(answer.color, 'Неизвестный цвет')
+    hex_color = kb.hex_to_color.get(answer.color, 'серый')
     response_text = (
         f"{answer.text}\n\n"
         f"Цвет: {hex_color}\n"

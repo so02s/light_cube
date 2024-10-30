@@ -50,8 +50,10 @@ async def edit_question(
     if not answers:
         text = 'Нет ответов'
     else:
-        quest = '\n'.join([f'{i+1}. {a.text}' for i, a in enumerate(answers)])
-        text = 'Ответы:\n' + quest
+        text = 'Ответы:\n'
+        for answer in answers:
+            correct_mark = "✔️" if answer.is_correct else "❌"
+            text += f'{correct_mark} {answer.text} - {kb.hex_to_color.get(answer.color, 'серый')} цвет\n'
     await msg.answer(
         f'{question.text}\nВремя на выполнение: {minutes:02d}:{seconds:02d}\n\n{text}',
         reply_markup=kb.get_edit_question_kb(question.quiz_id, question_id)
@@ -84,8 +86,10 @@ async def edit_question_handler(
     if not answers:
         text = 'Нет ответов'
     else:
-        quest = '\n'.join([f'{i+1}. {a.text}' for i, a in enumerate(answers)])
-        text = 'Ответы:\n' + quest
+        text = 'Ответы:\n'
+        for answer in answers:
+            correct_mark = "✔️" if answer.is_correct else "❌"
+            text += f'{correct_mark} {answer.text} - {kb.hex_to_color.get(answer.color, 'серый')} цвет\n'
     await inline_kb(
         callback,
         f'{question.text}\nВремя на выполнение: {minutes:02d}:{seconds:02d}\n\n{text}',
@@ -165,7 +169,7 @@ async def add_answer(
         await inline_kb(
             callback,
             'Можно добавить только 10 ответов',
-            kb.get_delete_done_kb(QuestionCallbackFactory(question_id=question_id, action='edit'))
+            kb.get_done_kb(QuestionCallbackFactory(question_id=question_id, action='edit'))
         )
         return
     await callback.message.answer('Введите ответ.\nОтмена на /cancel')
@@ -227,14 +231,13 @@ async def execute_delete_question_handler(
     await inline_kb(
         callback,
         f"Ответ успешно удален",
-        reply_markup=kb.get_delete_done_kb(
+        reply_markup=kb.get_done_kb(
             QuestionCallbackFactory(question_id=answer.question_id, action='edit')
         )
     )
 
 # ------ Смена порядка
 
-# TODO перенос вопроса на какое-то место
 @router.callback_query(QuizCallbackFactory.filter(F.action =='shuffle_question'))
 async def edit_question_choise(
     callback: CallbackQuery,
@@ -255,7 +258,7 @@ async def edit_question_handler(
     question = await db.get_question_by_id(question_id)
     await inline_kb(
         callback,
-        "Выберите какой вопрос вы хотите подвинуть",
+        "На какое место?",
         reply_markup= await kb.get_all_question_without_kb(callback_data.question_id, question.quiz_id, 'shuffle')
     )
 
@@ -265,10 +268,11 @@ async def edit_question_handler(
     callback_data: QuestionCallbackFactory
 ):
     question_id = callback_data.question_id
-    shuffle_to = callback_data.question_shuffle
-    await db.shuffle_quest(question_id, shuffle_to)
+    shuffle_to = await db.get_question_by_id(callback_data.question_shuffle)
+    await db.shuffle_quest(question_id, shuffle_to.question_number)
+    question = await db.get_question_by_id(question_id)
     await inline_kb(
         callback,
         "Сделано!",
-        reply_markup= await kb.get(callback_data.question_id, question.quiz_id, 'shuffle')
+        reply_markup=kb.get_done_kb(QuizCallbackFactory(quiz_id=question.quiz_id, action='edit'))
     )

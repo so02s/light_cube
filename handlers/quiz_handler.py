@@ -23,8 +23,16 @@ async def handle_user_answ(callback: CallbackQuery, callback_data: UserCallbackF
     await callback.message.edit(text='Ответ принят')
     await callback.message.delete_reply_markup()
 
-async def start_quiz(start_quiz_id = -1):
+
+async def start_quiz(selected_quiz_id = None):
+    global quiz_active, quiz_id, current_question
     
+    if selected_quiz_id is None:
+        if quiz_active:
+            quiz_active = False
+            return
+        else:
+            return
     
     cubes = await db.get_cubes()
     questions = await db.get_questions(quiz_obj)
