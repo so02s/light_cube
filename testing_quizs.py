@@ -72,6 +72,7 @@ async def add_testing_quizs():
     
 
 async def main():
+    await db.add_cubes()
     await db.add_moder('SpicySad')
     connected_at = datetime.datetime.now()
     await db.add_user_to_cube(120, 'SpicySad', 1339384726, connected_at)

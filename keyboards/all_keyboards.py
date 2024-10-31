@@ -56,7 +56,7 @@ def get_color_blink_kb():
         [
             InlineKeyboardButton(text="Розовый", callback_data="color_#E61070"),
             InlineKeyboardButton(text="Оранжевый", callback_data="color_#FF7400"),
-            InlineKeyboardButton(text="Белый", callback_data="color_#000000"),
+            InlineKeyboardButton(text="Белый", callback_data="color_#FFFAFA"),
         ],
         [
             InlineKeyboardButton(text="Медленное мигание", callback_data="blink"),
@@ -255,7 +255,7 @@ def reply_answers(cube_id: int, question_id: int, answers: list):
     builder = InlineKeyboardBuilder()
     for answer in answers:
         builder.button(
-            text=f'{hex_to_emoji.get(answer.color, '')}   {answer.text}',
+            text=f'{hex_to_emoji.get(answer.color, "")}   {answer.text}',
             callback_data=UserCallbackFactory(cube_id=cube_id, answer_id=answer.id)
         )
     builder.adjust(1)

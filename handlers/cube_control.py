@@ -72,15 +72,15 @@ async def cubes_blink_off(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'one_color')
 async def cubes_color(callback: CallbackQuery):
-    for _ in range(1, 121):
-        await wled_publish(f'cube_{i}/col', '#FF0000')
+    for i in range(1, 121):
+        await wled_publish(f'cube_{i}/col', '#00FF7F')
 
 @router.callback_query(F.data == 'two_color')
 async def cubes_color(callback: CallbackQuery):
     for i in range(1, 61):
-        await wled_publish(f'cube_{i}/col', '#FF0000')
+        await wled_publish(f'cube_{i}/col', '#00FF7F')
     for i in range(61, 121):
-        await wled_publish(f'cube_{i}/col', '#0000CD')
+        await wled_publish(f'cube_{i}/col', '#00FFFF')
 
 @router.callback_query(F.data == 'two_color_random')
 async def cubes_color(callback: CallbackQuery):
@@ -90,6 +90,6 @@ async def cubes_color(callback: CallbackQuery):
     first_half = index[:mid_index]
     second_half = index[mid_index:]
     for i in first_half:
-        await wled_publish(f'cube_{i}/col', '#FF0000')
+        await wled_publish(f'cube_{i}/col', '#00FF7F')
     for i in second_half:
-        await wled_publish(f'cube_{i}/col', '#0000CD')
+        await wled_publish(f'cube_{i}/col', '#00FFFF')

@@ -45,7 +45,7 @@ async def cmd_start(msg: Message, command: CommandObject):
     connected_at = datetime.datetime.now()
     
     user_exists = await db.check_user_exists(msg.from_user.id) 
-    if user_exists: 
+    if user_exists:
         await msg.answer("Вы уже зарегистрированы!", reply_markup=kb.get_quit(cube_id))
     elif (await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, connected_at)):
         await msg.answer("Добро пожаловать на квиз!\n\nКак только начнется квиз, вы будете получать вопросы.\nОтвечайте, нажимая на кнопки!")

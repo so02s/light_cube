@@ -54,7 +54,7 @@ async def edit_question(
         text = 'Ответы:\n'
         for answer in answers:
             correct_mark = "✔️" if answer.is_correct else "❌"
-            text += f'{correct_mark} {answer.text} - {kb.hex_to_color.get(answer.color, 'серый')} цвет\n'
+            text += f'{correct_mark} {answer.text} - {kb.hex_to_color.get(answer.color, "серый")} цвет\n'
     await msg.answer(
         f'{question.text}\nВремя на выполнение: {minutes:02d}:{seconds:02d}\n\n{text}',
         reply_markup=kb.get_edit_question_kb(question.quiz_id, question_id)
@@ -90,7 +90,7 @@ async def edit_question_handler(
         text = 'Ответы:\n'
         for answer in answers:
             correct_mark = "✔️" if answer.is_correct else "❌"
-            text += f'{correct_mark} {answer.text} - {kb.hex_to_color.get(answer.color, 'серый')} цвет\n'
+            text += f'{correct_mark} {answer.text} - {kb.hex_to_color.get(answer.color, "серый")} цвет\n'
     await inline_kb(
         callback,
         f'{question.text}\nВремя на выполнение: {minutes:02d}:{seconds:02d}\n\n{text}',

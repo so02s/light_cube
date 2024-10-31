@@ -97,22 +97,19 @@ async def start_quiz(selected_quiz_id = None):
             except:
                 pass
         
-        # TODO вывод на кубы, провеерять при подключении MQTT
         # Вывод ответов на кубы
         cube_answers = await db.get_users_answ(question.id)
         try:
-            # for cube in cubes:
-            #     await mqtt.cube_publish_by_id(cube.id, '#808080')
+            for cube in cubes:
+                await mqtt.cube_publish_by_id(cube.id, '#808080')
             
             for cube_answer in cube_answers:
-                pass
-                # TODO Может быть ошибка в обращении к объекту, проверить
-                # await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
+                await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.answer.color)
             
-            # # Красиво посветились
-            # await mqtt.cube_on()
-            # await asyncio.sleep(10)
-            # await mqtt.cube_off()
+            # Красиво посветились
+            await mqtt.cube_on()
+            await asyncio.sleep(10)
+            await mqtt.cube_off()
         except:
             print('Welp, MQTT not connect to bot')
     

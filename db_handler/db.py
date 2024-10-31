@@ -272,61 +272,6 @@ async def set_quiz_time(time: str, quiz_id: int) -> None:
             .where(Quiz.id == quiz_id)
             .values({'start_datetime': time})
         )
-            
-# async def get_users_answ(question_obj: Question):
-#     async with Session() as session:
-#         answer_list = await session.execute(
-#             select(Testing)
-#             .where(Testing.question == question_obj)
-#         )
-#         return answer_list.scalars().all()
-
-async def shuffle_quest(question_id: int, shuffle_to: int) -> None:
-    async with Session() as session, session.begin():
-        # Получаем текущий вопрос и его номер
-        result = await session.execute(
-            select(Question)
-            .where(Question.id == question_id)
-        )
-        question = result.scalar_one_or_none()
-
-        if question is None:
-            return
-
-        current_number = question.question_number
-
-        if current_number == shuffle_to:
-            return
-
-        # Перемещаем все вопросы между current_number и shuffle_to
-        if current_number < shuffle_to:
-            # Сдвиг вопросов вниз
-            await session.execute(
-                update(Question)
-                .where(Question.quiz_id == question.quiz_id,
-                        Question.question_number > current_number,
-                        Question.question_number <= shuffle_to)
-                .values(question_number=case(
-                        {Question.question_number: None}, 
-                        else_=Question.question_number - 1
-                    ))
-            )
-        else:
-            # Сдвиг вопросов вверх
-            await session.execute(
-                update(Question)
-                .where(Question.quiz_id == question.quiz_id,
-                        Question.question_number >= shuffle_to,
-                        Question.question_number < current_number)
-                .values(question_number==case(
-                        {Question.question_number: None}, 
-                        else_=Question.question_number + 1
-                    ))
-            )
-
-        # Обновляем номер текущего вопроса
-        question.question_number = shuffle_to
-        session.add(question)  # Добавляем вопрос обратно в сессию для обновления
 
 async def is_cube_empty(cube_id: int) -> bool:
     async with Session() as session:
@@ -341,12 +286,12 @@ async def is_cube_empty(cube_id: int) -> bool:
 
 async def remove_user(cube_id: int) -> None:
     async with Session() as session, session.begin():
-        result = await session.execute(
-            select(Cube)
+        connected_at = datetime.datetime.utcnow()
+        await session.execute(
+            update(Cube)
             .where(Cube.id == cube_id)
+            .values(username=None, user_id=None, connected_at=connected_at)
         )
-        res = result.scalars().first()
-        await session.delete(res)
         
 
 async def get_cubes():
@@ -354,26 +299,22 @@ async def get_cubes():
         cubes_list = await session.execute(select(Cube))
         return cubes_list.scalars().all()
         
-async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808080') -> bool:
+async def add_user_to_cube(cube_id: int, username: str, user_id: int, connected_at) -> bool:
     async with Session() as session, session.begin():
-        stmt = select(Cube).where(Cube.user_id == user_id, Cube.id == cube_id)
+        stmt = select(Cube).where(Cube.id == cube_id)
         result = await session.execute(stmt)
         existing_cube = result.scalars().first()
 
-        if existing_cube:
+        if existing_cube.username is not None:
             time_difference = connected_at - existing_cube.connected_at
             if time_difference.total_seconds() <= 15 * 60:
                 return False
-            existing_cube.username = username
-            existing_cube.connected_at = connected_at
-        else:
-            cube_obj = Cube(
-                id=cube_id,
-                username=username,
-                user_id=user_id,
-                connected_at=connected_at
-            )
-            session.add(cube_obj)
+        
+        await session.execute(
+            update(Cube)
+            .where(Cube.id == cube_id)
+            .values(username=username, user_id=user_id, connected_at=connected_at)
+        )
         return True
 
 async def add_user_answ(cube_id: int, answer_id: int) -> None:
@@ -427,3 +368,10 @@ async def del_test_quiz(quiz_id: int) -> None:
         if res:
             for r in res:
                 await session.delete(r)
+
+async def add_cubes():
+    async with Session() as session, session.begin():
+        for i in range(1, 121):
+            cube = Cube()
+            session.add(cube)
+        session.commit()
