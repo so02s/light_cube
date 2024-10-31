@@ -53,7 +53,7 @@ async def first_handler(callback: CallbackQuery):
         reply_markup=kb.get_quiz_kb()
     )
 
-# Результат последнего квиза
+# ------- Результат квиза
 
 @router.callback_query(F.data == 'result_quiz')
 async def result_quiz_callback(callback: CallbackQuery):
@@ -67,13 +67,13 @@ async def result_quiz_callback(callback: CallbackQuery):
 async def result_quiz_handler(callback: CallbackQuery, callback_data: QuizCallbackFactory):
     results = await db.top_ten(callback_data.quiz_id)
 
-    message = "Результаты последнего квиза:\n\n"
+    message = "Результаты квиза:\n\n"
     message += "Топ 10 пользователей по правильным ответам и скорости:\n"
     for i, (username, cube_id, correct_count, fast_time) in enumerate(results):
         message += f"{i+1}. Пользователь: {username} (Куб ID: {cube_id})\nКол-во правильных ответов: {correct_count}\n\n"
 
-    await callback.message.delete()
     await callback.message.answer(message, reply_markup=kb.get_done_kb('quiz_management'))
+    await callback.message.delete()
 
 
 # Вся инфа по какому-то квизу
@@ -142,29 +142,17 @@ async def quiz_handler(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'start_quiz')
 async def quiz_handler(callback: CallbackQuery):
-    # Остановка квиза
-    # if quiz_active:
-    #     callback.answer('Квиз остановлен')
-    #     quiz_active = False
-    #     return
-
-    # Старт с начала
-    # if quiz_id == -1:
     await inline_kb(
         callback,
         "Выберите какой квиз вы хотите начать",
         reply_markup= await kb.get_all_quizs_kb('start')
     )
-    # return
-    
-    # Продолжение с последнего момента
-    # await start_quiz()
 
 @router.callback_query(QuizCallbackFactory.filter(F.action == 'start'))
 async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallbackFactory):
     quiz_id = callback_data.quiz_id
-    await callback.answer('Квиз начат!')
-    await first_handler(callback)
+    await callback.message.answer('Квиз начат!\nПосле квиза вы можете использовать /start')
+    await callback.message.delete()
     await start_quiz(quiz_id)
 
 # ------- Программа мероприятия

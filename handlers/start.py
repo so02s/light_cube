@@ -12,6 +12,7 @@ from db_handler import db
 from utils.filter import is_moder
 import keyboards.all_keyboards as kb
 from keyboards.callback_handler import CubeExit
+from handlers.quiz_handler import is_quiz_active
 
 router = Router()
 
@@ -62,16 +63,19 @@ async def start_handler(callback: CallbackQuery, callback_data: CubeExit):
 async def start_handler(callback: CallbackQuery):
     await callback.message.delete()
 
-
-# TODO во время квиза другие кнопки
 # Старт для модератора
 @router.message(is_moder, Command("start"))
 async def cmd_start_mod(msg: Message, state: FSMContext):
     await state.clear()
-    msg_bot = await msg.answer(
-        "Привет, модератор!\n\nВыберите действие",
-        reply_markup=kb.get_management_kb()
-    )
+    
+    if(is_quiz_active()):
+        msg_bot = await msg.answer("Сейчас идет квиз\nПосле квиза вы можете использовать /start")
+    else:
+        msg_bot = await msg.answer(
+            "Привет, модератор!\n\nВыберите действие",
+            reply_markup=kb.get_management_kb()
+        )
+    
     await bot.set_my_commands(kb.commands_moder(), BotCommandScopeChat(chat_id=msg.from_user.id))
     await bot.delete_messages(
         msg.from_user.id,

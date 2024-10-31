@@ -12,11 +12,14 @@ from keyboards.callback_handler import UserCallbackFactory
 from mqtt import mqtt_handler as mqtt
 from utils.filter import is_moder
 
-
 quiz_active = False
 quiz_id = -1
 current_question = None
-    
+
+def is_quiz_active():
+    global quiz_active
+    return quiz_active
+
 router = Router()
 
 @router.callback_query(UserCallbackFactory.filter())
@@ -89,7 +92,10 @@ async def start_quiz(selected_quiz_id = None):
         
         # Остановка вопросов в целом
         for user_id, message_id in sent_messages:
-            await bot.delete_message(user_id, message_id)
+            try:
+                await bot.delete_message(user_id, message_id)
+            except:
+                pass
         
         # TODO вывод на кубы, провеерять при подключении MQTT
         # Вывод ответов на кубы
