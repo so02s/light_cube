@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
-from sqlalchemy import ForeignKey, DateTime, UniqueConstraint
+from sqlalchemy import ForeignKey, DateTime, UniqueConstraint, BigInteger
 
 from create_bot import engine
 
@@ -32,7 +32,7 @@ class Question(Base):
     question_number: Mapped[int] = mapped_column(nullable=False)
     
     quiz = relationship('Quiz', backref=backref('questions', cascade="all, delete"))
-
+    
     __table_args__ = (
         UniqueConstraint('quiz_id', 'question_number', name='unique_question_number_in_quiz'),
     )
@@ -59,19 +59,18 @@ class Cube(Base):
     username: Mapped[str] = mapped_column(nullable=True)
     user_id: Mapped[int] = mapped_column(unique=True, nullable=True)
     connected_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    # status: Mapped[str] = mapped_column()
 
 
 class Testing(Base):
     __tablename__ = "testing"
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('cubes.user_id'))
+    cube_id: Mapped[int] = mapped_column(ForeignKey('cubes.id'))
     answer_id: Mapped[int] = mapped_column(ForeignKey('answers.id'))
     time_add_answer: Mapped[datetime] = mapped_column(DateTime)
 
     cube = relationship('Cube', backref='testings')
-    answer = relationship('Answer', backref='testings')
+    answer = relationship('Answer', backref=backref('testings', cascade="all, delete"))
 
     @property
     def is_correct(self):

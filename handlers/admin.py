@@ -150,3 +150,6 @@ async def cmd_start(msg: Message):
 async def cmd_start(msg: Message):
     link = await create_start_link(bot, f'program', encode=True)
     await msg.answer(link)
+
+
+# TODO добавление канала для ответов

@@ -9,6 +9,7 @@ from keyboards.callback_handler import (
     QuestionCallbackFactory,
     AnswerCallbackFactory,
     UserCallbackFactory,
+    CubeExit,
 )
 
 hex_to_color = {
@@ -81,7 +82,7 @@ def get_quiz_kb():
             InlineKeyboardButton(text="Изменить квиз", callback_data="edit_quiz")
         ],
         [   InlineKeyboardButton(text="Начать квиз", callback_data="start_quiz")],
-        [   InlineKeyboardButton(text="Вывести результат последнего квиза", callback_data="result_quiz")],
+        [   InlineKeyboardButton(text="Вывести результат квиза", callback_data="result_quiz")],
         [   InlineKeyboardButton(text="Удалить квиз", callback_data="delete_quiz")],
         [   InlineKeyboardButton(text="Назад", callback_data="moder_panel")]
     ]
@@ -117,7 +118,6 @@ def get_edit_quiz_kb(quiz_id: int):
     builder = InlineKeyboardBuilder()
     builder.button(text="Изменить время начала", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="change_start_time"))
     builder.button(text="Изменить вопрос", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="change_question"))
-    # builder.button(text="Поменять порядок вопросов", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="shuffle_question"))
     builder.button(text="Добавить вопрос", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="add_question"))
     builder.button(text="Удалить вопрос", callback_data=QuizCallbackFactory(quiz_id=quiz_id, action="delete_question"))
     builder.button(text="Назад", callback_data="quiz_management")
@@ -243,12 +243,20 @@ def get_answer_color_kb(answer_id: int):
     builder.button(text="Назад", callback_data=AnswerCallbackFactory(answer_id=answer_id, action="edit"))
     return builder.as_markup()
 
-def reply_answers(answers: list):
+
+def get_quit(cube_id):
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Хочу выйти из квиза", callback_data=CubeExit(cube_id=cube_id))
+    builder.button(text="Окей, ничего не делай", callback_data="back_to_quesion")
+    builder.adjust(1)
+    return builder.as_markup()
+
+def reply_answers(cube_id: int, question_id: int, answers: list):
     builder = InlineKeyboardBuilder()
     for answer in answers:
         builder.button(
-            text=f'{answer.text}',
-            callback_data=UserCallbackFactory(answer_id=answer.id)
+            text=f'{hex_to_emoji.get(answer.color, '')}   {answer.text}',
+            callback_data=UserCallbackFactory(cube_id=cube_id, answer_id=answer.id)
         )
     builder.adjust(1)
     return builder.as_markup()

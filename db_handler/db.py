@@ -1,6 +1,6 @@
 from create_bot import Session
 from db_handler.models import Moder, Quiz, Question, Answer, Cube, Testing
-from sqlalchemy import select, func, update, case
+from sqlalchemy import select, func, update, case, delete, desc
 import datetime
 
 # ----админские
@@ -24,22 +24,51 @@ async def del_moder(name):
             await session.delete(moder)
 
 # -----модерские
-
 async def top_ten(quiz_id: int):
     async with Session() as session:
         query = (
             select(
                 Cube.username,
-                UserTesting.cube_id,
-                func.count(UserTesting.id).label('correct_count'),
-                func.min(UserTesting.time_add_answer).label('fastest_time')
+                Testing.cube_id,
+                func.count(Testing.id).label('correct_count'),
+                func.min(Testing.time_add_answer).label('fastest_time')
             )
-            .join(UserTesting, UserTesting.cube_id == Cube.id)
-            .join(Answer, UserTesting.answer_id == Answer.id)
-            .filter(Answer.is_correct == True, UserTesting.quiz_id == quiz_id)  # Filter by quiz_id
-            .group_by(Cube.username, UserTesting.cube_id)
+            .join(Testing, Testing.cube_id == Cube.id)
+            .join(Answer, Testing.answer_id == Answer.id)
+            .join(Question, Answer.question_id == Question.id)
+            .filter(Answer.is_correct == True, Question.quiz_id == quiz_id)
+            .group_by(Cube.username, Testing.cube_id)
             .order_by(desc('correct_count'), 'fastest_time')
             .limit(10)  
+        )
+        
+        result = await session.execute(query)
+        
+        return result.all()
+
+async def win_users(quiz_id: int):
+    async with Session() as session:
+        total_questions_query = (
+            select(func.count(Question.id))
+            .filter(Question.quiz_id == quiz_id)
+        )
+        
+        total_questions_result = await session.execute(total_questions_query)
+        total_questions_count = total_questions_result.scalar()
+        
+        query = (
+            select(
+                Cube.username,
+                Testing.cube_id,
+                func.count(Testing.id).label('correct_count')
+            )
+            .join(Testing, Testing.cube_id == Cube.id)
+            .join(Answer, Testing.answer_id == Answer.id)
+            .join(Question, Answer.question_id == Question.id)
+            .filter(Answer.is_correct == True, Question.quiz_id == quiz_id)
+            .group_by(Cube.username, Testing.cube_id)
+            .having(func.count(Testing.id) == total_questions_count)
+            .order_by(desc('correct_count'))
         )
         
         result = await session.execute(query)
@@ -244,13 +273,13 @@ async def set_quiz_time(time: str, quiz_id: int) -> None:
             .values({'start_datetime': time})
         )
             
-async def get_users_answ(question_obj: Question):
-    async with Session() as session:
-        answer_list = await session.execute(
-            select(Testing)
-            .where(Testing.question == question_obj)
-        )
-        return answer_list.scalars().all()
+# async def get_users_answ(question_obj: Question):
+#     async with Session() as session:
+#         answer_list = await session.execute(
+#             select(Testing)
+#             .where(Testing.question == question_obj)
+#         )
+#         return answer_list.scalars().all()
 
 async def shuffle_quest(question_id: int, shuffle_to: int) -> None:
     async with Session() as session, session.begin():
@@ -299,9 +328,7 @@ async def shuffle_quest(question_id: int, shuffle_to: int) -> None:
         question.question_number = shuffle_to
         session.add(question)  # Добавляем вопрос обратно в сессию для обновления
 
-
-
-async def is_cube_empty(cube_id) -> bool:
+async def is_cube_empty(cube_id: int) -> bool:
     async with Session() as session:
         result = await session.execute(
             select(Cube)
@@ -311,6 +338,16 @@ async def is_cube_empty(cube_id) -> bool:
             )
         )
         return result.scalars().first() is None
+
+async def remove_user(cube_id: int) -> None:
+    async with Session() as session, session.begin():
+        result = await session.execute(
+            select(Cube)
+            .where(Cube.id == cube_id)
+        )
+        res = result.scalars().first()
+        await session.delete(res)
+        
 
 async def get_cubes():
     async with Session() as session:
@@ -339,10 +376,10 @@ async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808
             session.add(cube_obj)
         return True
 
-async def add_user_answ(user_id: int, answer_id: int) -> None:
+async def add_user_answ(cube_id: int, answer_id: int) -> None:
     async with Session() as session, session.begin():
         testing_obj = Testing(
-            user_id=user_id,
+            cube_id=cube_id,
             answer_id=answer_id,
             time_add_answer=datetime.datetime.utcnow()
         )
@@ -355,17 +392,17 @@ async def get_user_answ(cube_id, current_question: Question):
             select(Testing)
             .where(
                 Testing.cube_id == cube_id,
-                Testing.question_id == current_question.id
+                Testing.answer.has(question_id=current_question.id)
             )
         )
         return result.scalars().first()
 
-async def get_users_answ(cube_id):
+async def get_users_answ(question_id: int) -> list:
     async with Session() as session:
         result = await session.execute(
             select(Testing)
             .where(
-                Testing.cube_id == cube_id
+                Testing.answer.has(question_id=question_id)
             )
         )
         return result.scalars().all()
@@ -375,10 +412,18 @@ async def check_user_exists(user_id: int) -> bool:
         result = await session.execute(
             select(Cube)
             .where(Cube.user_id == user_id)
-            .exists()
         )
-        return result.scalars()
+        return result.scalars().first() is not None
 
-# async def add_all_cubes:
-#     async with Session() as session, session.begin():
+async def del_test_quiz(quiz_id: int) -> None:
+    async with Session() as session, session.begin():
+        res = (await session.execute(
+            select(Testing)
+            .join(Answer, Testing.answer_id == Answer.id)
+            .join(Question, Answer.question_id == Question.id)
+            .where(Question.quiz_id == quiz_id)
+        )).scalars().all()
         
+        if res:
+            for r in res:
+                await session.delete(r)

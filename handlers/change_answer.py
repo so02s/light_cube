@@ -7,7 +7,7 @@ from aiogram.types import Message, BotCommandScopeChat, CallbackQuery
 
 from create_bot import bot
 import keyboards.all_keyboards as kb
-from keyboards.callback_handler import inline_kb, QuizCallbackFactory, QuestionCallbackFactory
+from keyboards.callback_handler import inline_kb, QuizCallbackFactory, QuestionCallbackFactory, AnswerCallbackFactory
 from db_handler import db
 from handlers.scheduler_handler import schedule_update_job
 

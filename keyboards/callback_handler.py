@@ -20,6 +20,10 @@ class AnswerCallbackFactory(CallbackData, prefix="fabanswer"):
 
 class UserCallbackFactory(CallbackData, prefix="fabuser"):
     answer_id: int
+    cube_id: int
+
+class CubeExit(CallbackData, prefix="fabexit"):
+    cube_id: int
 
 async def inline_kb(callback: CallbackQuery, text: str, reply_markup):
     await callback.message.edit_text(text, reply_markup=reply_markup)

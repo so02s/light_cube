@@ -57,12 +57,20 @@ async def first_handler(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'result_quiz')
 async def result_quiz_callback(callback: CallbackQuery):
-    results = await db.top_ten(quiz_id)
+    await inline_kb(
+        callback,
+        "Выберите результаты какого квиза вы хотите видеть",
+        reply_markup= await kb.get_all_quizs_kb('result')
+    )
+    
+@router.callback_query(QuizCallbackFactory.filter(F.action == 'result'))
+async def result_quiz_handler(callback: CallbackQuery, callback_data: QuizCallbackFactory):
+    results = await db.top_ten(callback_data.quiz_id)
 
     message = "Результаты последнего квиза:\n\n"
     message += "Топ 10 пользователей по правильным ответам и скорости:\n"
-    for i, (username, cube_id, correct_count, fastest_time) in enumerate(results):
-        message += f"{i+1}. Пользователь: {username} (Куб ID: {cube_id}) - {correct_count} правильных ответов, {fastest_time} секунд\n"
+    for i, (username, cube_id, correct_count, fast_time) in enumerate(results):
+        message += f"{i+1}. Пользователь: {username} (Куб ID: {cube_id})\nКол-во правильных ответов: {correct_count}\n\n"
 
     await callback.message.delete()
     await callback.message.answer(message, reply_markup=kb.get_done_kb('quiz_management'))
@@ -155,9 +163,9 @@ async def quiz_handler(callback: CallbackQuery):
 @router.callback_query(QuizCallbackFactory.filter(F.action == 'start'))
 async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallbackFactory):
     quiz_id = callback_data.quiz_id
-    await start_quiz(quiz_id)
     await callback.answer('Квиз начат!')
     await first_handler(callback)
+    await start_quiz(quiz_id)
 
 # ------- Программа мероприятия
 

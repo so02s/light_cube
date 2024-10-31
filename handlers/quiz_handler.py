@@ -23,8 +23,8 @@ router = Router()
 async def handle_user_answ(callback: CallbackQuery, callback_data: UserCallbackFactory):
     await callback.message.delete_reply_markup()
     await db.add_user_answ(
-        user_id=callback.message.chat.id,
-        answer_id=callback_data.answer_id
+        cube_id=callback_data.cube_id,
+        answer_id=callback_data.answer_id,
     )
     await callback.message.edit_text(text='Ответ принят')
 
@@ -35,12 +35,7 @@ async def start_quiz(selected_quiz_id = None):
     quiz_active = True
     quiz_id = selected_quiz_id
     
-    # if selected_quiz_id is None:
-    #     if quiz_active:
-    #         quiz_active = False
-    #         return
-    #     else:
-    #         return
+    await db.del_test_quiz(quiz_id)
     
     cubes = await db.get_cubes()
     questions = await db.get_questions_by_id(quiz_id)
@@ -51,16 +46,17 @@ async def start_quiz(selected_quiz_id = None):
         current_question = question
         answers = await db.get_answers(question)
         
+        sent_messages = []
         # Отправка юзерам
         for cube in cubes:
             try:
                 msg_bot = await bot.send_message(
                     cube.user_id,
                     question.text,
-                    reply_markup=kb.reply_answers(answers)
+                    reply_markup=kb.reply_answers(cube.id, question.id, answers)
                 )
-                # TODO не работает, в последнюю очередь
-                # await bot.delete_message(cube.user_id, msg_bot.id - 1)
+                
+                sent_messages.append((cube.user_id, msg_bot.message_id))
             except:
                 pass
         
@@ -91,25 +87,30 @@ async def start_quiz(selected_quiz_id = None):
         except:
             pass
         
+        # Остановка вопросов в целом
+        for user_id, message_id in sent_messages:
+            await bot.delete_message(user_id, message_id)
+        
         # TODO вывод на кубы, провеерять при подключении MQTT
         # Вывод ответов на кубы
-        # cube_answers = await db.get_users_answ(current_question)
-        # try:
-        #     for cube in cubes:
-        #         await mqtt.cube_publish_by_id(cube.id, '#808080')
+        cube_answers = await db.get_users_answ(question.id)
+        try:
+            # for cube in cubes:
+            #     await mqtt.cube_publish_by_id(cube.id, '#808080')
             
-        #     for cube_answer in cube_answers:
-        #         # TODO Может быть ошибка в обращении к объекту, проверить
-        #         await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
+            for cube_answer in cube_answers:
+                pass
+                # TODO Может быть ошибка в обращении к объекту, проверить
+                # await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
             
-        #     # Красиво посветились
-        #     await mqtt.cube_on()
-        #     await asyncio.sleep(30)
-        #     await mqtt.cube_off()
-        # except:
-        #     print('Welp, MQTT not connect to bot')
+            # # Красиво посветились
+            # await mqtt.cube_on()
+            # await asyncio.sleep(10)
+            # await mqtt.cube_off()
+        except:
+            print('Welp, MQTT not connect to bot')
     
     quiz_active = False
-    # for cube in cubes:
-    #     user_answers = db.get_users_answ(cube.user_id)
-        # await bot.send_message(1339384726, )
+    wins = await db.win_users(quiz_id)
+    # for win in wins:
+        

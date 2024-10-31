@@ -2,7 +2,7 @@ import datetime
 
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart, CommandObject
-from aiogram.types import Message, BotCommandScopeChat
+from aiogram.types import Message, BotCommandScopeChat, CallbackQuery
 from aiogram.types.input_file import FSInputFile
 from aiogram.utils.deep_linking import decode_payload
 from aiogram.fsm.context import FSMContext
@@ -11,6 +11,7 @@ from create_bot import bot
 from db_handler import db
 from utils.filter import is_moder
 import keyboards.all_keyboards as kb
+from keyboards.callback_handler import CubeExit
 
 router = Router()
 
@@ -37,15 +38,30 @@ async def cmd_start(msg: Message, command: CommandObject):
     except:
         return
     
+    if cube_id > 120 or cube_id < 1:
+        return
+    
     connected_at = datetime.datetime.now()
     
     user_exists = await db.check_user_exists(msg.from_user.id) 
     if user_exists: 
-        await msg.answer("Вы уже зарегистрированы!") # TODO выход из квиза (кнопочка)
+        await msg.answer("Вы уже зарегистрированы!", reply_markup=kb.get_quit(cube_id))
     elif (await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, connected_at)):
         await msg.answer("Добро пожаловать на квиз!\n\nКак только начнется квиз, вы будете получать вопросы.\nОтвечайте, нажимая на кнопки!")
     else:
         await msg.answer("Куб уже занят другим пользователем.")
+    await msg.delete()
+
+@router.callback_query(CubeExit.filter())
+async def start_handler(callback: CallbackQuery, callback_data: CubeExit):
+    await callback.message.delete_reply_markup()
+    await db.remove_user(callback_data.cube_id)
+    await callback.message.edit_text('Вы вышли из квиза')
+
+@router.callback_query(F.data == 'back_to_quesion')
+async def start_handler(callback: CallbackQuery):
+    await callback.message.delete()
+
 
 # TODO во время квиза другие кнопки
 # Старт для модератора
