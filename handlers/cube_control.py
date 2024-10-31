@@ -1,9 +1,11 @@
+import random
+
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
-from mqtt.mqtt_handler import wled_publish, cube_on, cube_off
 from keyboards.callback_handler import inline_kb
 import keyboards.all_keyboards as kb
-import random
+from mqtt.mqtt_handler import wled_publish, cube_on, cube_off
+
 
 router = Router()
 

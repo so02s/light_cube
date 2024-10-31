@@ -1,9 +1,8 @@
 import datetime
 
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, DateTime, DateTime, UniqueConstraint
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
+from sqlalchemy import ForeignKey, DateTime, UniqueConstraint
 
 from create_bot import engine
 
@@ -58,22 +57,20 @@ class Cube(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(nullable=True)
-    user_id: Mapped[int] = mapped_column(nullable=True)
+    user_id: Mapped[int] = mapped_column(unique=True, nullable=True)
     connected_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    status: Mapped[str] = mapped_column()
+    # status: Mapped[str] = mapped_column()
 
 
 class Testing(Base):
     __tablename__ = "testing"
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    cube_id: Mapped[int] = mapped_column(ForeignKey('cubes.id'))
-    question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey('cubes.user_id'))
     answer_id: Mapped[int] = mapped_column(ForeignKey('answers.id'))
-    time_add_answer: Mapped[datetime.datetime] = mapped_column(DateTime)
+    time_add_answer: Mapped[datetime] = mapped_column(DateTime)
 
     cube = relationship('Cube', backref='testings')
-    question = relationship('Question', backref='testings')
     answer = relationship('Answer', backref='testings')
 
     @property

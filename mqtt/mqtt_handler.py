@@ -8,8 +8,6 @@ async def wled_publish(topic, msg):
     except:
         print("Error: MQTT is not connected")
 
-is_blinking = False
-
 # Управление кубами
 
 async def cube_on():

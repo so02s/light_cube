@@ -329,24 +329,21 @@ async def add_user_to_cube(cube_id, username, user_id, connected_at, color='#808
                 return False
             existing_cube.username = username
             existing_cube.connected_at = connected_at
-            existing_cube.status = color
         else:
             cube_obj = Cube(
                 id=cube_id,
                 username=username,
                 user_id=user_id,
-                connected_at=connected_at,
-                status=color
+                connected_at=connected_at
             )
             session.add(cube_obj)
         return True
 
-async def add_user_answ(cube_id, question_obj: Question, answer_obj: Answer) -> None:
+async def add_user_answ(user_id: int, answer_id: int) -> None:
     async with Session() as session, session.begin():
         testing_obj = Testing(
-            cube_id=cube_id,
-            question_id=question_obj.id,
-            answer_id=answer_obj.id,
+            user_id=user_id,
+            answer_id=answer_id,
             time_add_answer=datetime.datetime.utcnow()
         )
         session.add(testing_obj)
@@ -362,3 +359,26 @@ async def get_user_answ(cube_id, current_question: Question):
             )
         )
         return result.scalars().first()
+
+async def get_users_answ(cube_id):
+    async with Session() as session:
+        result = await session.execute(
+            select(Testing)
+            .where(
+                Testing.cube_id == cube_id
+            )
+        )
+        return result.scalars().all()
+
+async def check_user_exists(user_id: int) -> bool:
+    async with Session() as session:
+        result = await session.execute(
+            select(Cube)
+            .where(Cube.user_id == user_id)
+            .exists()
+        )
+        return result.scalars()
+
+# async def add_all_cubes:
+#     async with Session() as session, session.begin():
+        

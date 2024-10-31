@@ -1,18 +1,28 @@
+from typing import Optional
+
 from aiogram.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from typing import Optional
 from aiogram.filters.callback_data import CallbackData
 from db_handler import db
-from keyboards.callback_handler import QuizCallbackFactory, QuestionCallbackFactory, AnswerCallbackFactory, UserCallbackFactory
+from keyboards.callback_handler import (
+    QuizCallbackFactory,
+    QuestionCallbackFactory,
+    AnswerCallbackFactory,
+    UserCallbackFactory,
+)
 
 hex_to_color = {
-    '#FF0000': 'красный',
-    '#0000FF': 'синий',
-    '#FFFF00': 'желтый',
-    '#00FF00': 'зеленый',
-    '#FFA500': 'оранжевый',
-    '#800080': 'фиолетовый',
-    '#00CED1': 'голубой',
+    '#00FF7F': 'зеленый',
+    '#FF7400': 'оранжевый',
+    '#9315F6': 'фиолетовый',
+    '#00FFFF': 'голубой',
+}
+
+hex_to_emoji = {
+    '#00FF7F': '🟩',
+    '#FF7400': '🟧',
+    '#9315F6' : '🟪',
+    '#00FFFF': '🟦',
 }
 
 def get_management_kb():
@@ -35,13 +45,17 @@ def get_cube_kb():
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return kb
 
-
-# TODO добавить необходимые цвета
 def get_color_blink_kb():
     buttons = [
         [
-            InlineKeyboardButton(text="Красный", callback_data="color_#FF0000"),
-            InlineKeyboardButton(text="Синий", callback_data="color_#0000CD"),
+            InlineKeyboardButton(text="Зеленый", callback_data="color_#00FF7F"),
+            InlineKeyboardButton(text="Голубой", callback_data="color_#00FFFF"),
+            InlineKeyboardButton(text="Фиолетовый", callback_data="color_#9315F6"),
+        ],
+        [
+            InlineKeyboardButton(text="Розовый", callback_data="color_#E61070"),
+            InlineKeyboardButton(text="Оранжевый", callback_data="color_#FF7400"),
+            InlineKeyboardButton(text="Белый", callback_data="color_#000000"),
         ],
         [
             InlineKeyboardButton(text="Медленное мигание", callback_data="blink"),
@@ -232,7 +246,12 @@ def get_answer_color_kb(answer_id: int):
 def reply_answers(answers: list):
     builder = InlineKeyboardBuilder()
     for answer in answers:
-        builder.button(text=answer.text, callback_data=UserCallbackFactory(answer_id=answer.id))
+        builder.button(
+            text=f'{answer.text}',
+            callback_data=UserCallbackFactory(answer_id=answer.id)
+        )
+    builder.adjust(1)
+    return builder.as_markup()
 
 def commands_moder():
     return [BotCommand(command='start', description='Старт')]

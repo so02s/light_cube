@@ -1,5 +1,6 @@
-from aiogram.types import CallbackQuery, Message
 from typing import Optional
+
+from aiogram.types import CallbackQuery, Message
 from aiogram.filters.callback_data import CallbackData
 from create_bot import bot
 
@@ -17,7 +18,7 @@ class AnswerCallbackFactory(CallbackData, prefix="fabanswer"):
     action: str
     color: Optional[str] = None
 
-class UserCallbackFactory(CallbackData, prefix="fabanswer"):
+class UserCallbackFactory(CallbackData, prefix="fabuser"):
     answer_id: int
 
 async def inline_kb(callback: CallbackQuery, text: str, reply_markup):

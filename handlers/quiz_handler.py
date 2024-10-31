@@ -1,15 +1,17 @@
+import asyncio
+
 import aioschedule
-from db_handler import db
-from db_handler.models import Quiz
-from aiogram.types import Message, CallbackQuery
 from aiogram import Router, BaseMiddleware
 from aiogram.filters import StateFilter, Command
+from aiogram.types import Message, CallbackQuery
 from create_bot import bot
-import asyncio
-import mqtt.mqtt_handler as mqtt
-from utils.filter import is_moder
+from db_handler import db
+from db_handler.models import Quiz
 from keyboards import all_keyboards as kb
 from keyboards.callback_handler import UserCallbackFactory
+from mqtt import mqtt_handler as mqtt
+from utils.filter import is_moder
+
 
 quiz_active = False
 quiz_id = -1
@@ -17,31 +19,35 @@ current_question = None
     
 router = Router()
 
-@router.callback_query(UserCallbackFactory)
+@router.callback_query(UserCallbackFactory.filter())
 async def handle_user_answ(callback: CallbackQuery, callback_data: UserCallbackFactory):
-    await db.add_user_answ(callback.message.chat.id, callback_data.answer_id)
-    await callback.message.edit(text='Ответ принят')
     await callback.message.delete_reply_markup()
+    await db.add_user_answ(
+        user_id=callback.message.chat.id,
+        answer_id=callback_data.answer_id
+    )
+    await callback.message.edit_text(text='Ответ принят')
 
 
 async def start_quiz(selected_quiz_id = None):
     global quiz_active, quiz_id, current_question
     
-    if selected_quiz_id is None:
-        if quiz_active:
-            quiz_active = False
-            return
-        else:
-            return
+    quiz_active = True
+    quiz_id = selected_quiz_id
+    
+    # if selected_quiz_id is None:
+    #     if quiz_active:
+    #         quiz_active = False
+    #         return
+    #     else:
+    #         return
     
     cubes = await db.get_cubes()
-    questions = await db.get_questions(quiz_obj)
+    questions = await db.get_questions_by_id(quiz_id)
     
-    global quiz_active
-    quiz_active = True
 
     for question in questions:
-        global current_question
+        
         current_question = question
         answers = await db.get_answers(question)
         
@@ -53,7 +59,8 @@ async def start_quiz(selected_quiz_id = None):
                     question.text,
                     reply_markup=kb.reply_answers(answers)
                 )
-                await bot.delete_message(msg_bot.id - 1)
+                # TODO не работает, в последнюю очередь
+                # await bot.delete_message(cube.user_id, msg_bot.id - 1)
             except:
                 pass
         
@@ -84,22 +91,25 @@ async def start_quiz(selected_quiz_id = None):
         except:
             pass
         
+        # TODO вывод на кубы, провеерять при подключении MQTT
         # Вывод ответов на кубы
-        cube_answers = await db.get_users_answ(current_question)
-        try:
-            for cube in cubes:
-                await mqtt.cube_publish_by_id(cube.id, '#808080')
+        # cube_answers = await db.get_users_answ(current_question)
+        # try:
+        #     for cube in cubes:
+        #         await mqtt.cube_publish_by_id(cube.id, '#808080')
             
-            for cube_answer in cube_answers:
-                # TODO Может быть ошибка в обращении к объекту, проверить
-                await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
+        #     for cube_answer in cube_answers:
+        #         # TODO Может быть ошибка в обращении к объекту, проверить
+        #         await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.cube_id.status)
             
-            # Красиво посветились
-            await mqtt.cube_on()
-            await asyncio.sleep(30)
-            await mqtt.cube_off()
-        except:
-            print('Welp, MQTT not connect to bot')
+        #     # Красиво посветились
+        #     await mqtt.cube_on()
+        #     await asyncio.sleep(30)
+        #     await mqtt.cube_off()
+        # except:
+        #     print('Welp, MQTT not connect to bot')
     
     quiz_active = False
-    quiz_id = -1
+    # for cube in cubes:
+    #     user_answers = db.get_users_answ(cube.user_id)
+        # await bot.send_message(1339384726, )

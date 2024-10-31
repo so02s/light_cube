@@ -1,9 +1,19 @@
 import asyncio
+
+from create_bot import bot, dp
+from handlers import (
+    start,
+    cube_control,
+    quiz_control,
+    change_quiz,
+    change_question,
+    change_answer,
+    quiz_handler,
+    admin,
+)
 from handlers.scheduler_handler import schedule_quizzes, start_scheduler
 from utils.filter import refresh_moders
-from create_bot import bot, dp
-from handlers import start, cube_control, quiz_control, \
-    change_quiz, change_question, change_answer, quiz_handler, admin
+
 
 async def start_bot():
     start_scheduler()

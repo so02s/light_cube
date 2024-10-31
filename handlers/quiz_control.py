@@ -1,16 +1,17 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, InputMediaPhoto, Message, ContentType
-from mqtt.mqtt_handler import wled_publish, cube_on, cube_off
-from keyboards.callback_handler import inline_kb
-import keyboards.all_keyboards as kb
-from create_bot import bot
 from aiogram.types.input_file import FSInputFile
-from keyboards.callback_handler import QuizCallbackFactory
-from db_handler import db
-from handlers.scheduler_handler import schedule_del_job
 from aiogram.filters import Command, StateFilter
+
 from create_bot import bot
+from db_handler import db
 from handlers.quiz_handler import start_quiz
+from handlers.scheduler_handler import schedule_del_job
+from keyboards.callback_handler import inline_kb, QuizCallbackFactory
+import keyboards.all_keyboards as kb
+from mqtt.mqtt_handler import wled_publish, cube_on, cube_off
+
+
 
 router = Router()
 
@@ -134,27 +135,27 @@ async def quiz_handler(callback: CallbackQuery):
 @router.callback_query(F.data == 'start_quiz')
 async def quiz_handler(callback: CallbackQuery):
     # Остановка квиза
-    if quiz_active:
-        callback.answer('Квиз остановлен')
-        quiz_active = False
-        return
+    # if quiz_active:
+    #     callback.answer('Квиз остановлен')
+    #     quiz_active = False
+    #     return
 
     # Старт с начала
-    if quiz_id == -1:
-        await inline_kb(
-            callback,
-            "Выберите какой квиз вы хотите начать",
-            reply_markup= await kb.get_all_quizs_kb('start')
-        )
-        return
+    # if quiz_id == -1:
+    await inline_kb(
+        callback,
+        "Выберите какой квиз вы хотите начать",
+        reply_markup= await kb.get_all_quizs_kb('start')
+    )
+    # return
     
     # Продолжение с последнего момента
-    await start_quiz()
+    # await start_quiz()
 
 @router.callback_query(QuizCallbackFactory.filter(F.action == 'start'))
 async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallbackFactory):
     quiz_id = callback_data.quiz_id
-    await start_quiz(start_quiz_id=quiz_id)
+    await start_quiz(quiz_id)
     await callback.answer('Квиз начат!')
     await first_handler(callback)
 

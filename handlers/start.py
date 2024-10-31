@@ -32,14 +32,17 @@ async def cmd_start(msg: Message, command: CommandObject):
         return
     
     # Подключение к кубу
-    # TODO проверка есть ли такой пользователь в бд (не может подключиться, если есть)
     try:
         cube_id = int(reference.split('_')[-1])
     except:
         return
     
     connected_at = datetime.datetime.now()
-    if (await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, connected_at)):
+    
+    user_exists = await db.check_user_exists(msg.from_user.id) 
+    if user_exists: 
+        await msg.answer("Вы уже зарегистрированы!") # TODO выход из квиза (кнопочка)
+    elif (await db.add_user_to_cube(cube_id, msg.from_user.username, msg.from_user.id, connected_at)):
         await msg.answer("Добро пожаловать на квиз!\n\nКак только начнется квиз, вы будете получать вопросы.\nОтвечайте, нажимая на кнопки!")
     else:
         await msg.answer("Куб уже занят другим пользователем.")

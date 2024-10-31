@@ -1,10 +1,11 @@
 import logging
+
+from decouple import config
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from decouple import config
 
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 # логирование
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

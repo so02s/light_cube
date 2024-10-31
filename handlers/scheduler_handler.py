@@ -1,8 +1,10 @@
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import datetime
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from db_handler.db import get_quizs
-from handlers.quiz_handler import start_quiz
 from db_handler.models import Quiz
+from handlers.quiz_handler import start_quiz
+
 
 scheduler = AsyncIOScheduler()
 formatted_time = datetime.datetime.strptime('01.01.2026 00:00', '%d.%m.%Y %H:%M')
