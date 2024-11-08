@@ -70,6 +70,7 @@ async def start_quiz(selected_quiz_id = None):
                 pass
         
         # Отправка в канал
+        
         # correct_answers = [id for id, answer in enumerate(answers) if answer.is_correct]
         # type_poll = 'regular'
         # if len(correct_answers) == 1:

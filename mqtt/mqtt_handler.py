@@ -7,6 +7,7 @@ async def wled_publish(topic: str, msg: str):
     async with aiomqtt.Client(config('MQTT_HOST')) as client:
         await client.publish("wled/" + topic, payload=msg, qos=1)
 
+
 # Управление кубами
 
 async def cube_on():

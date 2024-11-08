@@ -1,7 +1,7 @@
 from db_handler.db import get_moders
 
 # админ сделан умышленно
-admins_username = ['SpicySad']
+admins_username = []
 moders_username = []
 
 async def refresh_moders() -> None:

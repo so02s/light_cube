@@ -72,6 +72,7 @@ class Testing(Base):
     cube = relationship('Cube', backref='testings')
     answer = relationship('Answer', backref=backref('testings', cascade="all, delete"))
 
+
     @property
     def is_correct(self):
         return self.answer.is_correct

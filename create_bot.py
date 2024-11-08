@@ -8,7 +8,6 @@ from aiogram.enums import ParseMode
 
 
 # логирование
-# + 2 часа, поздно заметил
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename="/home/so02s/light_cube/logs.log",filemode="w")
 logger=logging.getLogger(__name__)
 

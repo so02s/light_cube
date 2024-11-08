@@ -7,6 +7,7 @@ async def main():
     
     await asyncio.sleep(5)
     
+    # По кол-ву кубов
     for i in range(1, 121):
         await asyncio.sleep(0.5)
         await mqtt.cube_publish_by_id(i, '/col', '#fc0a3f')

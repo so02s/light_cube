@@ -9,6 +9,7 @@ from keyboards.callback_handler import (
     CubeExit,
 )
 
+
 hex_to_color = {
     '#44EB99': 'зеленый',
     '#1A53BC': 'синий',

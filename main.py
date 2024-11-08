@@ -37,6 +37,7 @@ async def main():
         change_answer.router,
         quiz_handler.router
     )
+    
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
 

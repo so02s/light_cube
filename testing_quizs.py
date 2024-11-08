@@ -36,6 +36,7 @@ async def add_testing_quizs():
     await db.add_answ('1939', quest_1_5, is_correct=False, col='#9315F6')
     
     
+    
     # Квиз по программированию
     await db.add_quiz('Программирование', "24.10.2024 19:55")
     quiz2 = await db.get_quiz('Программирование')
