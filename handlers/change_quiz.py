@@ -1,9 +1,8 @@
-import re
 import datetime
 
 from aiogram import Router, F
-from aiogram.filters import Command, StateFilter, CommandObject
-from aiogram.types import Message, BotCommandScopeChat, CallbackQuery
+from aiogram.filters import Command, StateFilter
+from aiogram.types import Message, CallbackQuery
 
 from create_bot import bot
 import keyboards.all_keyboards as kb

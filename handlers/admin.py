@@ -1,16 +1,16 @@
-import random
-import re
 import asyncio
+import subprocess
 
 from aiogram import Router
 from aiogram.filters import Command, StateFilter, CommandObject
-from aiogram.types import Message, BotCommandScopeChat
+from aiogram.types import Message
 from aiogram.utils.deep_linking import create_start_link
 from aiogram.fsm.context import FSMContext
 
 from create_bot import bot
 from utils.filter import is_admin, refresh_moders, moders
 from db_handler import db
+from mqtt.mqtt_handler import wled_publish
 
 
 router = Router()
@@ -19,6 +19,9 @@ router = Router()
 async def help_admin(msg: Message):
     await msg.answer('''= Команды администратора =
 /help - помощь, выводит это сообщение
+/brigh {value} - установление яркости (от 0 до 255)
+/restart_network - перезагружает подключение
+/reboot - перезагрузка raspberry
 /deep_link - генерирует 120 реферальных ссылок на кубы (специально на мероприятие)
 /deep_link_program - генерирует реферальную ссылу на программу (специально на мероприятие)
 /all_moder - выводит всех модераторов
@@ -52,6 +55,20 @@ async def edit_answer_repl(
     await bot.delete_messages(msg.from_user.id, [msg.message_id - i for i in range(100)])
     await bot.delete_messages(msg.from_user.id, [msg.message_id - i for i in range(100, 200)])
     await state.clear()
+
+# Яркость
+@router.message(
+    is_admin,
+    StateFilter(None),
+    Command("brigh")
+)
+async def cmd_start(msg: Message, command: CommandObject):
+    args: str = command.args
+    if not args:
+        await msg.answer('Вы забыли добавить значение\n/brigh {value}')
+        return
+    brigh = args.split(' ')[0]
+    await wled_publish('cubes/api', f'{{"bri": {brigh}}}')
 
 # Все админы
 @router.message(
@@ -139,10 +156,7 @@ async def confirm_delmoder(msg: Message, state: FSMContext):
 
 @router.message(is_admin, StateFilter(None), Command("deep_link"))
 async def cmd_start(msg: Message):
-    end = 121
-    for i in range(1, end):
-        if(i % 30 == 0):
-            await asyncio.sleep(30)
+    for i in [109]:
         link = await create_start_link(bot, f'cube_{i}', encode=True)
         await msg.answer(link)
         
@@ -150,6 +164,34 @@ async def cmd_start(msg: Message):
 async def cmd_start(msg: Message):
     link = await create_start_link(bot, f'program', encode=True)
     await msg.answer(link)
-
-
-# TODO добавление канала для ответов
+    
+# emqx
+@router.message(
+    is_admin,
+    StateFilter(None),
+    Command("restart_network")
+)
+async def cmd_restart_network(msg: Message):
+    try:
+        subprocess.run(["systemctl", "restart", "NetworkManager"], check=True)
+        await msg.answer("Служба NetworkManager успешно перезагружена.")
+    except subprocess.CalledProcessError as e:
+        await msg.answer(f"Ошибка при перезагрузке службы NetworkManager: {e}")
+    except Exception as e:
+        await msg.answer(f"Произошла непредвиденная ошибка: {e}")
+        
+        
+@router.message(
+    is_admin,
+    StateFilter(None),
+    Command("reboot")
+)
+async def cmd_reboot(msg: Message):
+    try:
+        # Перезагрузка системы
+        subprocess.run(["sudo", "reboot"], check=True)
+        await msg.answer("Система будет перезагружена.")
+    except subprocess.CalledProcessError as e:
+        await msg.answer(f"Ошибка при перезагрузке системы: {e}")
+    except Exception as e:
+        await msg.answer(f"Произошла непредвиденная ошибка: {e}")

@@ -1,9 +1,4 @@
-import re
-
-from aiogram.filters import Filter, CommandObject
-from aiogram.types import Message
 from db_handler.db import get_moders
-
 
 # админ сделан умышленно
 admins_username = ['SpicySad']

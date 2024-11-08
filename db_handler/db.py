@@ -1,6 +1,7 @@
 from create_bot import Session
 from db_handler.models import Moder, Quiz, Question, Answer, Cube, Testing
-from sqlalchemy import select, func, update, case, delete, desc
+from sqlalchemy import select, func, update, case, delete, desc, text
+from sqlalchemy.orm import joinedload
 import datetime
 
 # ----админские
@@ -342,19 +343,20 @@ async def get_users_answ(question_id: int) -> list:
     async with Session() as session:
         result = await session.execute(
             select(Testing)
+            .options(joinedload(Testing.answer))
             .where(
                 Testing.answer.has(question_id=question_id)
             )
         )
         return result.scalars().all()
 
-async def check_user_exists(user_id: int) -> bool:
+async def check_user_exists(user_id: int) -> Cube:
     async with Session() as session:
         result = await session.execute(
             select(Cube)
             .where(Cube.user_id == user_id)
         )
-        return result.scalars().first() is not None
+        return result.scalars().first()
 
 async def del_test_quiz(quiz_id: int) -> None:
     async with Session() as session, session.begin():
@@ -375,3 +377,11 @@ async def add_cubes():
             cube = Cube()
             session.add(cube)
         session.commit()
+        
+async def get_color_from_answer(cube_answer: Testing):
+    async with Session() as session, session.begin():
+        result = await session.execute(
+            text("SELECT a.color FROM answers a JOIN tests t ON a.id = t.answer_id WHERE t.id = :id")
+            .params(id=cube_answer.id)
+        )
+        return result.scalars().first()

@@ -1,8 +1,7 @@
 from typing import Optional
 
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery
 from aiogram.filters.callback_data import CallbackData
-from create_bot import bot
 
 class QuizCallbackFactory(CallbackData, prefix="fabquiz"):
     quiz_id: int

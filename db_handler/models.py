@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
-from sqlalchemy import ForeignKey, DateTime, UniqueConstraint, BigInteger
+from sqlalchemy import ForeignKey, DateTime, UniqueConstraint
 
 from create_bot import engine
 

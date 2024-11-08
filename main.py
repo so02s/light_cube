@@ -13,11 +13,13 @@ from handlers import (
 )
 from handlers.scheduler_handler import schedule_quizzes, start_scheduler
 from utils.filter import refresh_moders
+from mqtt.mqtt_handler import wled_publish
 
 
 async def start_bot():
     start_scheduler()
     await schedule_quizzes()
+    await wled_publish('cubes/api', f'{{"bri": {200}}}')
 
 async def stop_bot():
     pass

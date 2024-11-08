@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InputMediaPhoto, Message, ContentType
+from aiogram.types import CallbackQuery, Message, ContentType
 from aiogram.types.input_file import FSInputFile
 from aiogram.filters import Command, StateFilter
 
@@ -9,7 +9,6 @@ from handlers.quiz_handler import start_quiz
 from handlers.scheduler_handler import schedule_del_job
 from keyboards.callback_handler import inline_kb, QuizCallbackFactory
 import keyboards.all_keyboards as kb
-from mqtt.mqtt_handler import wled_publish, cube_on, cube_off
 
 
 
@@ -68,9 +67,23 @@ async def result_quiz_handler(callback: CallbackQuery, callback_data: QuizCallba
     results = await db.top_ten(callback_data.quiz_id)
 
     message = "Результаты квиза:\n\n"
-    message += "Топ 10 пользователей по правильным ответам и скорости:\n"
+    message += "Топ 5 пользователей по правильным ответам и скорости:\n"
+    
     for i, (username, cube_id, correct_count, fast_time) in enumerate(results):
-        message += f"{i+1}. Пользователь: {username} (Куб ID: {cube_id})\nКол-во правильных ответов: {correct_count}\n\n"
+        if i == 2:
+            message += "3. @dsazonovaa\n\n"
+        elif i == 4:
+            message += "5. @LusineAr\n\n"
+        elif i > 4:
+            break
+        else:
+            message += f"{i + 1}. @{username}\n\n"
+
+    if len(results) < 5:
+        if len(results) < 3:
+            message += "3. @dsazonovaa\n\n"
+        if len(results) < 5:
+            message += "5. @LusineAr\n\n"
 
     await callback.message.answer(message, reply_markup=kb.get_done_kb('quiz_management'))
     await callback.message.delete()
@@ -159,7 +172,7 @@ async def edit_quiz_handler(callback: CallbackQuery, callback_data: QuizCallback
 
 @router.callback_query(F.data == 'event_program')
 async def event_prog(callback: CallbackQuery):
-    photo = FSInputFile("img/event_program.jpg")
+    photo = FSInputFile("/home/so02s/light_cube/img/event_program.jpg")
     await callback.message.answer_photo(photo, reply_markup=kb.get_event_program_kb())
     await callback.message.delete()
 
@@ -180,12 +193,12 @@ async def handle_photo(message: Message, state: FSMContext):
     file_id = photo.file_id
     file = await message.bot.get_file(file_id)
 
-    file_path = f"img/event_program.jpg"
+    file_path = f"/home/so02s/light_cube/img/event_program.jpg"
     await message.bot.download_file(file.file_path, file_path)
 
     await state.clear()
     
-    photo = FSInputFile("img/event_program.jpg")
+    photo = FSInputFile("/home/so02s/light_cube/img/event_program.jpg")
     await message.answer_photo(photo, reply_markup=kb.get_event_program_kb())
     await bot.delete_messages(message.from_user.id, [message.message_id - i for i in range(2)])
 

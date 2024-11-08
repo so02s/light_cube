@@ -1,8 +1,5 @@
-from typing import Optional
-
 from aiogram.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.filters.callback_data import CallbackData
 from db_handler import db
 from keyboards.callback_handler import (
     QuizCallbackFactory,
@@ -13,17 +10,17 @@ from keyboards.callback_handler import (
 )
 
 hex_to_color = {
-    '#00FF7F': 'зеленый',
-    '#FF7400': 'оранжевый',
-    '#9315F6': 'фиолетовый',
-    '#00FFFF': 'голубой',
+    '#44EB99': 'зеленый',
+    '#1A53BC': 'синий',
+    '#861BE3': 'фиолетовый',
+    '#36C5F0': 'голубой',
 }
 
 hex_to_emoji = {
-    '#00FF7F': '🟩',
-    '#FF7400': '🟧',
-    '#9315F6' : '🟪',
-    '#00FFFF': '🟦',
+    '#44EB99': '🟩',
+    '#1A53BC': '🟦',
+    '#861BE3' : '🟪',
+    '#36C5F0': '🔵',
 }
 
 def get_management_kb():
@@ -49,14 +46,14 @@ def get_cube_kb():
 def get_color_blink_kb():
     buttons = [
         [
-            InlineKeyboardButton(text="Зеленый", callback_data="color_#00FF7F"),
-            InlineKeyboardButton(text="Голубой", callback_data="color_#00FFFF"),
-            InlineKeyboardButton(text="Фиолетовый", callback_data="color_#9315F6"),
+            InlineKeyboardButton(text="Зеленый", callback_data="color_#44EB99"),
+            InlineKeyboardButton(text="Голубой", callback_data="color_#36C5F0"),
+            InlineKeyboardButton(text="Фиолетовый", callback_data="color_#861BE3"),
         ],
         [
-            InlineKeyboardButton(text="Розовый", callback_data="color_#E61070"),
-            InlineKeyboardButton(text="Оранжевый", callback_data="color_#FF7400"),
-            InlineKeyboardButton(text="Белый", callback_data="color_#FFFAFA"),
+            InlineKeyboardButton(text="Синий", callback_data="color_#1A53BC"),
+            InlineKeyboardButton(text="Оранжевый", callback_data="color_#FF4A50"),
+            InlineKeyboardButton(text="Белый", callback_data="color_#FFFFFF"),
         ],
         [
             InlineKeyboardButton(text="Медленное мигание", callback_data="blink"),
@@ -239,12 +236,12 @@ def get_answer_color_kb(answer_id: int):
             text=color_name,
             callback_data=AnswerCallbackFactory(answer_id=answer_id, action="change_color_answ", color=hex_color)
         )
-    builder.adjust(2)
     builder.button(text="Назад", callback_data=AnswerCallbackFactory(answer_id=answer_id, action="edit"))
+    builder.adjust(1)
     return builder.as_markup()
 
 
-def get_quit(cube_id):
+def get_quit(cube_id: int):
     builder = InlineKeyboardBuilder()
     builder.button(text="Хочу выйти из квиза", callback_data=CubeExit(cube_id=cube_id))
     builder.button(text="Окей, ничего не делай", callback_data="back_to_quesion")
@@ -253,9 +250,9 @@ def get_quit(cube_id):
 
 def reply_answers(cube_id: int, question_id: int, answers: list):
     builder = InlineKeyboardBuilder()
-    for answer in answers:
+    for i, answer in enumerate(answers):
         builder.button(
-            text=f'{hex_to_emoji.get(answer.color, "")}   {answer.text}',
+            text=f'{hex_to_emoji.get(answer.color, "")} {i+1}',
             callback_data=UserCallbackFactory(cube_id=cube_id, answer_id=answer.id)
         )
     builder.adjust(1)

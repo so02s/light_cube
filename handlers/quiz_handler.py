@@ -1,16 +1,14 @@
 import asyncio
+import random
 
-import aioschedule
-from aiogram import Router, BaseMiddleware
-from aiogram.filters import StateFilter, Command
-from aiogram.types import Message, CallbackQuery
+from aiogram import Router
+from aiogram.types import CallbackQuery
 from create_bot import bot
 from db_handler import db
-from db_handler.models import Quiz
 from keyboards import all_keyboards as kb
 from keyboards.callback_handler import UserCallbackFactory
 from mqtt import mqtt_handler as mqtt
-from utils.filter import is_moder
+from utils.presets import win_color, no_blinck, breathe_effect
 
 quiz_active = False
 quiz_id = -1
@@ -43,7 +41,11 @@ async def start_quiz(selected_quiz_id = None):
     cubes = await db.get_cubes()
     questions = await db.get_questions_by_id(quiz_id)
     
-
+    await mqtt.wled_publish('cubes/api', no_blinck())
+    await mqtt.wled_publish('cubes/col', '#808080')
+    asyncio.sleep(1)
+    await mqtt.cube_off()
+    
     for question in questions:
         
         current_question = question
@@ -51,11 +53,15 @@ async def start_quiz(selected_quiz_id = None):
         
         sent_messages = []
         # Отправка юзерам
+        text_for_user = question.text + '\n'
+        for answer in answers:
+            text_for_user += '\n\n' + answer.text
+            
         for cube in cubes:
             try:
                 msg_bot = await bot.send_message(
                     cube.user_id,
-                    question.text,
+                    text_for_user,
                     reply_markup=kb.reply_answers(cube.id, question.id, answers)
                 )
                 
@@ -64,19 +70,18 @@ async def start_quiz(selected_quiz_id = None):
                 pass
         
         # Отправка в канал
-        correct_answers = [id for id, answer in enumerate(answers) if answer.is_correct]
-        poll_options = [answer.text for answer in answers]
-        type_poll = 'regular'
-        if len(correct_answers) == 1:
-            type_poll = 'quiz'
+        # correct_answers = [id for id, answer in enumerate(answers) if answer.is_correct]
+        # type_poll = 'regular'
+        # if len(correct_answers) == 1:
+        #     type_poll = 'quiz'
         
         poll_message = await bot.send_poll(
             chat_id=-1002481450341,
             question=question.text,
             options=[answer.text for answer in answers],
             is_anonymous=True,
-            type=type_poll,
-            correct_option_id=correct_answers[0],
+            # type=type_poll,
+            # correct_option_id=correct_answers[0],
             disable_notification=False
         )
         
@@ -100,20 +105,32 @@ async def start_quiz(selected_quiz_id = None):
         # Вывод ответов на кубы
         cube_answers = await db.get_users_answ(question.id)
         try:
-            for cube in cubes:
-                await mqtt.cube_publish_by_id(cube.id, '#808080')
+            await mqtt.wled_publish('cubes/api', no_blinck())
+            
+            for cube in range(1, 121):
+                random_color_hex = random.choice(list(kb.hex_to_color.keys()))
+                await mqtt.cube_publish_by_id(cube, '/col', "#808080")
             
             for cube_answer in cube_answers:
-                await mqtt.cube_publish_by_id(cube_answer.cube_id, cube_answer.answer.color)
+                await mqtt.cube_publish_by_id(cube_answer.cube_id, '/col', cube_answer.answer.color)
             
             # Красиво посветились
             await mqtt.cube_on()
             await asyncio.sleep(10)
             await mqtt.cube_off()
-        except:
-            print('Welp, MQTT not connect to bot')
+        except Exception as e:
+            print(f'Welp: {e}')
+        # await mqtt.wled_publish('cubes/col', '#808080')
+        # await mqtt.wled_publish('cubes/api', breathe_effect())
     
     quiz_active = False
+    
+    # вывод победителей
+    await mqtt.wled_publish('cubes/col', '#808080')
+    await asyncio.sleep(2)
     wins = await db.win_users(quiz_id)
-    # for win in wins:
-        
+    # пресет для победителя
+    for win in wins:
+        await mqtt.cube_publish_by_id(win.cube_id, '/api', win_color())
+    asyncio.sleep(1)
+    await mqtt.cube_on()

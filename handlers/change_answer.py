@@ -1,15 +1,11 @@
-import re
-import datetime
-
 from aiogram import Router, F
-from aiogram.filters import Command, StateFilter, CommandObject
-from aiogram.types import Message, BotCommandScopeChat, CallbackQuery
+from aiogram.filters import Command, StateFilter
+from aiogram.types import Message, CallbackQuery
 
 from create_bot import bot
 import keyboards.all_keyboards as kb
-from keyboards.callback_handler import inline_kb, QuizCallbackFactory, QuestionCallbackFactory, AnswerCallbackFactory
+from keyboards.callback_handler import inline_kb, QuestionCallbackFactory, AnswerCallbackFactory
 from db_handler import db
-from handlers.scheduler_handler import schedule_update_job
 
 
 router = Router()
