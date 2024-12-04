@@ -4,16 +4,20 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 from sqlalchemy import ForeignKey, DateTime, UniqueConstraint
 
-from create_bot import engine
-
 class Base(AsyncAttrs, DeclarativeBase):
     pass
+
+class Admin(Base):
+    __tablename__ = 'admins'
+    
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True)
 
 class Moder(Base):
     __tablename__ = 'moders'
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
 
 class Quiz(Base):
     __tablename__ = 'quizs'
@@ -77,7 +81,12 @@ class Testing(Base):
     def is_correct(self):
         return self.answer.is_correct
 
+
+from create_bot import engine
+from decouple import config
+from db_handler.db import add_admin
+
 async def create_all_tables():
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+        await add_admin(config('ADMIN'))

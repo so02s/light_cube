@@ -3,6 +3,7 @@ import aiomqtt
 from decouple import config
 
 async def wled_publish(topic: str, msg: str):
+    return
     print("publish to", topic, ", payload:", msg)
     async with aiomqtt.Client(config('MQTT_HOST')) as client:
         await client.publish("wled/" + topic, payload=msg, qos=1)
@@ -11,14 +12,17 @@ async def wled_publish(topic: str, msg: str):
 # Управление кубами
 
 async def cube_on():
+    return
     async with aiomqtt.Client(config('MQTT_HOST')) as client:
         await client.publish("wled/cubes", payload='ON', qos=1)
 
 async def cube_off():
+    return
     async with aiomqtt.Client(config('MQTT_HOST')) as client:
         await client.publish("wled/cubes", payload='OFF', qos=1)
 
 async def cube_publish_by_id(id: int, theme: str, msg: str):
+    return
     print("publish to", "wled/cube_" + str(id) + theme, ", payload:", msg)
     async with aiomqtt.Client(config('MQTT_HOST')) as client:
         await client.publish("wled/cube_" + str(id) + theme, payload=msg, qos=1)

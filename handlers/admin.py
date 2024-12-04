@@ -12,38 +12,50 @@ from utils.filter import is_admin, refresh_moders, moders
 from db_handler import db
 from mqtt.mqtt_handler import wled_publish
 
+'''
+    Модуль, включающий все хендлеры администратора.
+'''
 
 router = Router()
 
-@router.message(is_admin, Command("help"))
+@router.message(is_admin, Command("start"))
 async def help_admin(msg: Message):
     await msg.answer('''= Команды администратора =
-/help - помощь, выводит это сообщение
-/brigh {value} - установление яркости (от 0 до 255)
-/restart_network - перезагружает подключение
-/reboot - перезагрузка raspberry
-/deep_link - генерирует 120 реферальных ссылок на кубы (специально на мероприятие)
-/deep_link_program - генерирует реферальную ссылу на программу (специально на мероприятие)
-/all_moder - выводит всех модераторов
-/add_moder {name} - добавляет модератора name
-/del_moder - дает удалить модератора на выбор
+/start - команды адмистратора
+/brigh {value} - установить яркость (0 <= value <= 255)
+/all_moder - вывести всех модераторов
+/add_moder {name} - добавить модератора name
+/del_moder - удалить модератора на выбор
+/all_admin - вывести всех админов
+/add_moder {name} - добавить админа name
+/del_moder - удалить админа на выбор
+/restart_network - перезагрузить подключение к сети
 /cancel - отмена действия, удаление прошлых сообщений
 ''')
 
-# -------- FSM
+# -------- FSM ---------
 
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+# Классы для хранения состояния ответа админа
+
 class DelModer(StatesGroup):
     ch_name = State()
     confirm = State()
+    
+class DelAdmin(StatesGroup):
+    ch_name = State()
+    confirm = State()
+
 
 @router.message(
     is_admin,
     StateFilter(
         DelModer.ch_name,
         DelModer.confirm,
+        DelAdmin.ch_name,
+        DelAdmin.confirm,
         None
     ),
     Command("cancel")
@@ -52,23 +64,65 @@ async def edit_answer_repl(
     msg: Message,
     state: FSMContext
 ):
+    """
+    Эта функция предназначена для отмены текущего процесса редактирования 
+    или подтверждения и очистки состояния. При выполнении команды 
+    удаляются последние 200 сообщений, отправленных пользователем, 
+    и состояние FSM (Finite State Machine) сбрасывается.
+
+    Аргументы:
+    - msg: Сообщение, содержащее команду от пользователя.
+    - state: Контекст состояния FSM, который позволяет управлять состоянием 
+      пользователя.
+    """
     await bot.delete_messages(msg.from_user.id, [msg.message_id - i for i in range(100)])
     await bot.delete_messages(msg.from_user.id, [msg.message_id - i for i in range(100, 200)])
     await state.clear()
 
-# Яркость
+
+# ----------------- Команды --------------------
+
 @router.message(
     is_admin,
     StateFilter(None),
     Command("brigh")
 )
 async def cmd_start(msg: Message, command: CommandObject):
+    """
+    Эта функция ожидает, что администратор отправит команду с аргументом, 
+    который указывает значение яркости (brightness) для кубов.
+    Если аргумент не указан, админу будет отправлено сообщение с 
+    просьбой указать значение.
+
+    Аргументы:
+    - msg: Сообщение от пользователя.
+    - command: Объект, содержащий аргументы команды.
+
+    Пример использования:
+    - Команда: /brigh 128
+    - Действие: Устанавливает яркость устройства на 128.
+    """
     args: str = command.args
+    
     if not args:
         await msg.answer('Вы забыли добавить значение\n/brigh {value}')
         return
+    
     brigh = args.split(' ')[0]
+    
+    try:
+        brigh = int(brigh_str)
+    except ValueError:
+        await msg.answer('Пожалуйста, введите числовое значение для яркости.')
+        return
+    
+    if brigh < 0:
+        brigh = 0
+    elif brigh > 255:
+        brigh = 255
+    
     await wled_publish('cubes/api', f'{{"bri": {brigh}}}')
+    await msg.answer(f'Установлена яркость {brigh}')
 
 # Все админы
 @router.message(

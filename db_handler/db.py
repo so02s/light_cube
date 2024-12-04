@@ -1,28 +1,101 @@
 from create_bot import Session
-from db_handler.models import Moder, Quiz, Question, Answer, Cube, Testing
+from db_handler.models import Admin, Moder, Quiz, Question, Answer, Cube, Testing
 from sqlalchemy import select, func, update, case, delete, desc, text
 from sqlalchemy.orm import joinedload
 import datetime
+from typing import List
 
-# ----админские
+# Moder
 
-async def add_moder(name) -> None:
+async def add_moder(name: str) -> None:
+    '''
+    Добавляет нового модератора с указанным именем в БД. Не дублирует записи.
+
+    Параметры:
+    name (str): Имя нового модератора.
+    '''
     async with Session() as session, session.begin():
-        session.add(Moder(name=name))
+        obj = (
+            await session.execute(
+                select(Moder)
+                .where(Moder.name == name))
+        ).first()
+        if not obj:
+            session.add(Moder(name=name))
 
-async def get_moders():
+async def get_moders() -> List[str]:
+    '''
+    Получает список имен всех модераторов из БД.
+
+    Возвращает:
+    List[str]: Имена всех модераторов в БД.
+    '''
     async with Session() as session:
         result = await session.scalars(select(Moder))
         return [moder.name for moder in result]
 
-async def del_moder(name):
+async def del_moder(name: str) -> None:
+    '''
+    Удаление модератора из БД. Если модератор с указанным именем найден, он будет удален.
+
+    Параметры:
+    name (str): Имя модератора для удаления.
+    '''
     async with Session() as session, session.begin():
-        moder = (await session.scalars(
-                    select(Moder)
-                    .where(Moder.name == name))
-                    ).first()
-        if moder:
-            await session.delete(moder)
+        obj = (
+            await session.scalars(
+                select(Moder)
+                .where(Moder.name == name))
+        ).first()
+        if obj:
+            await session.delete(obj)
+
+
+# Admin
+
+async def add_admin(name: str) -> None:
+    '''
+    Добавляет нового администратора с указанным именем в БД. Не дублирует записи.
+
+    Параметры:
+    name (str): Имя нового администратора.
+    '''
+    async with Session() as session, session.begin():
+        obj = (
+            await session.execute(
+                select(Admin)
+                .where(Admin.name == name))
+        ).first()
+        if not obj:
+            session.add(Admin(name=name))
+
+async def get_admins() -> List[str]:
+    '''
+    Получает список имен всех администраторов из базы данных.
+
+    Возвращает:
+    List[str]: Список строк, представляющих имена всех администраторов в базе данных.
+    '''
+    async with Session() as session:
+        result = await session.scalars(select(Admin))
+        return [admin.name for admin in result]
+
+async def del_admin(name: str) -> None:
+    '''
+    Удаление админа из БД. Если админ с указанным именем найден, он будет удален.
+
+    Параметры:
+    name (str): Имя админа для удаления.
+    '''
+    async with Session() as session, session.begin():
+        obj = (
+            await session.scalars(
+                select(Admin)
+                .where(Admin.name == name))
+        ).first()
+        if obj:
+            await session.delete(obj)
+
 
 # -----модерские
 async def top_ten(quiz_id: int):

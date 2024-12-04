@@ -1,8 +1,21 @@
-from db_handler.db import get_moders
+from db_handler.db import get_moders, get_admins
 
-# админ сделан умышленно
+'''
+    Модуль для фильтрации пользователей.
+    Хранит админов и модеров.
+'''
+
+
+
 admins_username = []
 moders_username = []
+
+async def refresh_admins() -> None:
+    global admins_username
+    try:
+        admins_username = await get_admins()
+    except Exception as e:
+        print(f"Error: {e}")
 
 async def refresh_moders() -> None:
     global moders_username
