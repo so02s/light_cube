@@ -1,10 +1,11 @@
-aiogram~=3.13.1
-python-decouple~=3.8
-pytz
-aiomqtt
-alembic
-sqlalchemy
-asyncpg
-configparser
-aioschedule
-apscheduler
+# aiogram~=3.13.1
+# python-decouple~=3.8
+# pytz
+# aiomqtt
+# alembic
+# sqlalchemy
+# asyncpg
+configparser==7.2.0
+dependency_injector==4.49.0
+# aioschedule
+# apscheduler
