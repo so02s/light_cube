@@ -5,7 +5,7 @@
 
 from ..model.cube import Cube
 from ..model.color import Color
-from ..interface.cube_control import LightOutput
+from ..port.cube_control import LightOutput
 
 class CubeControl:
     def __init__(self, light_output: LightOutput):

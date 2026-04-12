@@ -8,7 +8,7 @@ class Container(containers.DeclarativeContainer):
     # TODO in another place
     # config.db.url.from_value(f"postgresql+asyncpg://{config.db.user}:{config.db.pasw}@{config.db.host}/{config.db.name}")
 
-    mqtt_adapter = providers.Singleton(
+    light_output_adapter = providers.Singleton(
         MQTTClient,
         hostname=config.mqtt.hostname,
         cube_topic=config.mqtt.cube_topic
@@ -16,7 +16,12 @@ class Container(containers.DeclarativeContainer):
 
     cube_control = providers.Factory(
         CubeControl,
-        light_output=mqtt_adapter
+        light_output=light_output_adapter
+    )
+
+    input_controler = providers.Factory(
+        # SomeInputAdapter,
+        use_case=cube_control
     )
 
 
